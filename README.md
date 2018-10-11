@@ -10,7 +10,9 @@
 
 ### Contents Specification
 
-pp.pdf ,  project requirements
-code , all project codes
-proposal , proposal to submit, deadline 16/10/2018 (tex)
-report , final report, deadline 30/11/2018 (tex)
+```
+pp.pdf :  project requirements
+code : all project codes
+proposal : proposal to submit, deadline 16/10/2018 (tex)
+report : final report, deadline 30/11/2018 (tex)
+```
