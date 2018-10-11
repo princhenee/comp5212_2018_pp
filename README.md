@@ -1,12 +1,14 @@
-#COMP5212 Machine learning 2018 Fall Programming Project
+# COMP5212 Machine learning 2018 Fall Programming Project
 
-###Group Members
+### Group Members
 
-Hok Chun Ng, , hcngac@connect.ust.hk
-Shengyuan Zhang, 20565161, szhangcg@connect.ust.hk
-Ge Chen, 20360858, gchenaj@connect.ust.hk
+|      name      |    student ID    |    email    |
+|----------------|------------------|-------------|
+|  Hok Chun Ng   |                  | hcngac@connect.ust.hk |
+|Shengyuan Zhang |     20565161     | szhangcg@connect.ust.hk |
+|    Ge Chen     |     20360858     |  gchenaj@connect.ust.hk |
 
-###Contents Specification
+### Contents Specification
 
 pp.pdf ,  project requirements
 code , all project codes
