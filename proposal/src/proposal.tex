@@ -6,6 +6,7 @@
 \usepackage{graphicx}
 
 \title{COMP5212 Machine Learning 2018 Fall programming project proposal \\ 
+       \ \ \ \ \\
        Building a self-driving game bot with Reinforcement Learning}
 
 \author{Hok Chun Ng, 20272532, hcngac@connect.ust.hk \\
@@ -24,11 +25,6 @@ and data, we tend to use a game simulator provided by OpenAI to generate trainin
 data. We introduce the elements of Q-learning, a reinforcement learning technique
 which does not require a model of the environment.
 \end{abstract}
-
-\section{Topic}
-
-The objective of this project is to build a game bot that can perform well in a
-simulated self-driving environment. 
 
 \section{Description of the application and its practical significance}
 
@@ -49,10 +45,26 @@ sensing input to action output. Our eyes and ears are the sensors to interpret t
 current environment, including the road view from wind screen ( e.g. weather, traffic lights,
 walking people ), view from side mirror ( e.g. neighboring cars, following cars ),
 car horns, and so on. Then our brain takes all these input signals to decide what action
-to take. The actions include turning the steering wheel, lighting turn signals, braking,
-and so on.
+to take. The actions include turning the steering wheel, lighting turn signals, accelerating,
+braking, and so on. Once the actions are executed, the environment input changes, and again
+drivers will decide and take a new round of actions accordingly. This loop continues until
+the car arrives at the destination.
 
-\section{Data set (and preprocessing, if needed)}
+The environment-action loop in the driving experience resembles the basics of reinforcement
+learning, an area of machine learning concerned with taking actions in an environment in
+order to maximize some notion of cumulative reward. Unlike supervised learning, reinforcement
+learning does not require correct input/output pairs. Instead, reinforcement learning often
+requires a reward function in terms of different actions under the environment. For driving,
+the final reward can be no traffic accident and arrive at the destination safely.
+
+\begin{figure}
+\centering
+\includegraphics[width=0.8\textwidth]{figures/rl.png}
+\caption{\label{fig:RL} Reinforcement Learning Illustration}
+\end{figure}
+
+
+\section{Data set}
 
 TODO
 
