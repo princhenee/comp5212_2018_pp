@@ -5,9 +5,9 @@
 \usepackage{amsmath}
 \usepackage{graphicx}
 
-\title{COMP5212 Machine Learning 2018 Fall programming project proposal \\ 
+\title{COMP5212 Machine Learning 2018 Fall programming project proposal \\
        \ \ \ \ \\
-       Building a self-driving game bot with Reinforcement Learning}
+       Building a self-driving agent with Reinforcement Learning}
 
 \author{Hok Chun Ng, 20272532, hcngac@connect.ust.hk \\
         Shengyuan Zhang, 20565161, szhangcg@connect.ust.hk \\
@@ -19,11 +19,10 @@
 \maketitle
 
 \begin{abstract}
-In this project proposal, we intend to build a smart self-driving agent using
-reinforcement learning algorithms. Due to the limitation of real-world hardware
-and data, we tend to use a game simulator provided by OpenAI to generate training
-data. We introduce the elements of Q-learning, a reinforcement learning technique
-which does not require a model of the environment.
+In this project proposal, we intend to build a self-driving agent that only
+relies on vision using reinforcement learning algorithms. Due to the limitation
+of real-world hardware and data, we intend to use a game simulator provided by
+OpenAI to generate training data. We introduce the elements of Q-learning, a reinforcement learning technique which does not require a model of the environment.
 \end{abstract}
 
 \section{Description of the application and its practical significance}
@@ -92,13 +91,26 @@ to a new state $S_{t+1}$ and new reward $R_{t+1}$ and feedback to the agent. The
 reinforcement learning agent is to gain as much as reward as possible.
 
 
-Q-Learning
-TODO
+In this proposed project, we will use the method of deep Q-learning. Q-learning defines a reward expectation function, $Q$, which provides the expected reward of an action $a$ taken under the current state $s$. This $Q$ function can be recursively defined as $Q(s,a) = R(s,a) + \alpha \max_{a^{'}} Q(S^{'}(s,a),a^{'})$, where $R$ is the immediate reward given action $a$ taken under state $s$, $\alpha$ is the discount rate of future reward and $S^{'}$ is the state transition. Given numerous possibilities of imagery state $s$, we cannot compute $Q$ directly. Alternatively, we can use a deep convolutional network to estimate $Q$.
+
+TODO reference insertion\\
+TODO CNN description\\
 
 \section{Design of experiments and performance evaluation}
 
-TODO
+TODO Experiment setup\\
+TODO Performance evaluation\\
+TODO Comparison with other model\\
 
+\section {Project planning}
+
+TODO project items\\
+TODO project timeline\\
+TODO work distribution\\
+
+
+
+TODO References\\
 % \begin{figure}
 % \centering
 % \includegraphics[width=0.3\textwidth]{frog.jpg}
