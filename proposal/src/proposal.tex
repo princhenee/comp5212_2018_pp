@@ -42,13 +42,33 @@ a simulated game environment.
 
 For human drivers, the driving behavior can be formulated in a loop from an environment
 sensing input to action output. Our eyes and ears are the sensors to interpret the
-current environment, including the road view from wind screen ( e.g. weather, traffic lights,
-walking people ), view from side mirror ( e.g. neighboring cars, following cars ),
+current environment, including the road view from wind screen (e.g. weather, traffic lights,
+walking people), view from side mirror (e.g. neighboring cars, following cars),
 car horns, and so on. Then our brain takes all these input signals to decide what action
 to take. The actions include turning the steering wheel, lighting turn signals, accelerating,
 braking, and so on. Once the actions are executed, the environment input changes, and again
 drivers will decide and take a new round of actions accordingly. This loop continues until
-the car arrives at the destination.
+the car arrives at the destination. Therefore, the machine learning problem in self-driving
+can be: given a set of environment input, find the best actions to execute until arriving
+at destination.
+
+
+\section{Data set}
+
+In this project, we intend to use the OpenAI Gym library to simulate car driving.
+The OpenAI Gym is a toolkit for developping and comparing reinforcement algorithms.
+It is a collection of test problems, by providing the environments that anyone can
+use to test her own reinforcement learning algorithms. The environments have a shared
+interface, allowing any user to write general algorithms.
+
+We will focus on the environment ``Enduro-v0'', which is the Atari 2600 game Enduro
+simulating a driving experience. In this environment, the observation is an RGB image
+of the screen (simulate the view from wind screen), which is an array of shape (210,
+160, 3). Each action is repeatedly performed for a duration of $k$ frames, where $k$
+is uniformly sampled from $\{2, 3, 4\}$. To reduce computation overhead, we may first
+converse the RGB images to grayscale ones.
+
+\section{Machine learning methods}
 
 The environment-action loop in the driving experience resembles the basics of reinforcement
 learning, an area of machine learning concerned with taking actions in an environment in
@@ -58,18 +78,21 @@ requires a reward function in terms of different actions under the environment. 
 the final reward can be no traffic accident and arrive at the destination safely.
 
 \begin{figure}
-\centering
-\includegraphics[width=0.8\textwidth]{figures/rl.png}
-\caption{\label{fig:RL} Reinforcement Learning Illustration}
+    \centering
+    \includegraphics[width=0.8\textwidth]{./figures/rl.png}
+    \caption{ Reinforcement Learning Illustration}
+    \label{fig:RL}
 \end{figure}
 
 
-\section{Data set}
+Figure \ref{fig:RL} shows the basic model of reinforcement learning. At each time $t$, an agent
+receives the environment state $S_t$ and current reward $R_t$. It then chooses an action $a_t$
+from the set of available actions, which is sent to the environment. The environment moves
+to a new state $S_{t+1}$ and new reward $R_{t+1}$ and feedback to the agent. The goal of a
+reinforcement learning agent is to gain as much as reward as possible.
 
-TODO
 
-\section{Machine learning methods}
-
+Q-Learning
 TODO
 
 \section{Design of experiments and performance evaluation}

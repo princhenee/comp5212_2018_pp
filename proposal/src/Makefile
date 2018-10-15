@@ -20,6 +20,7 @@ all: $(PDFS)
 
 %.toc: %.tex
 	pdflatex $*.tex
+	pdflatex $*.tex
 
 clean:
 	/bin/rm -f $(PDFS) *.dvi *.aux *.ps *~ *.log *.out *.lot *.lof *.toc *.blg *.bbl url.sty
