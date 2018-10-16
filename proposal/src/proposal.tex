@@ -61,7 +61,7 @@ It is a collection of test problems, by providing the environments that anyone c
 use to test her own reinforcement learning algorithms. The environments have a shared
 interface, allowing any user to write general algorithms.
 
-We will focus on the environment ``Enduro-v0'', which is the Atari 2600 game Enduro
+We will focus on the environment ``Enduro-v0'' \cite{enduro}, which is the Atari 2600 game Enduro
 simulating a driving experience. In this environment, the observation is an RGB image
 of the screen (simulate the view from wind screen), which is an array of shape (210,
 160, 3). Each action is repeatedly performed for a duration of $k$ frames, where $k$
@@ -104,15 +104,12 @@ TODO CNN description\\
 
 \section{Design of experiments and performance evaluation}
 
-TODO Experiment setup\\
+We run several random episodes of the Enduro game simulator and store all the observations and rewards.
+
 TODO Performance evaluation\\
 TODO Comparison with other model\\
 
 \section {Project planning}
-
-TODO project items\\
-TODO project timeline\\
-TODO work distribution\\
 
 \begin{center}
     \begin{tabular}{ | c | c | c | } 
@@ -150,6 +147,9 @@ TODO References\\
 
 \bibitem{gym}
   OpenAI Gym toolkit, \texttt{https://gym.openai.com}
+
+\bibitem{enduro}
+  OpenAI Gym Enduro Environment, \texttt{https://gym.openai.com/envs/Enduro-v0}
 
 \end{thebibliography}
 \end{document}
