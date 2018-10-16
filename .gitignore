@@ -1,1 +1,6 @@
-.DS_Store
+proposal/**/*.DS_Store
+proposal/**/*.aux
+proposal/**/*.fdb_latexmk
+proposal/**/*.fls
+proposal/**/*.log
+proposal/**/*.gz
