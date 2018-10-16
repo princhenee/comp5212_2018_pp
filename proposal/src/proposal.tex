@@ -44,27 +44,13 @@ We try to mimic how human decision works with machine learning algorithms. The m
 
 \section{Data set}
 
-In this project, we intend to use the OpenAI Gym library to simulate car driving.
-The OpenAI Gym \cite{gym} is a toolkit for developping and comparing reinforcement algorithms.
-It is a collection of test problems, by providing the environments that anyone can
-use to test her own reinforcement learning algorithms. The environments have a shared
-interface, allowing any user to write general algorithms.
+In this project, we intend to use the OpenAI Gym library to simulate the environment of car driving. The OpenAI Gym \cite{gym} is a toolkit for developping and comparing reinforcement algorithms. It is a collection of test problems, by providing the environments that anyone can use to test her own reinforcement learning algorithms. The environments have a shared interface, allowing any user to write general algorithms. It is a good tool as a common ground for benchmarking of machine learning models.
 
-We will focus on the environment ``Enduro-v0'', which is the Atari 2600 game Enduro
-simulating a driving experience. In this environment, the observation is an RGB image
-of the screen (simulate the view from wind screen), which is an array of shape (210,
-160, 3). Each action is repeatedly performed for a duration of $k$ frames, where $k$
-is uniformly sampled from $\{2, 3, 4\}$. To reduce computation overhead, we may first
-converse the RGB images to grayscale ones.
+We will focus on the environment ``Enduro-v0'', which is the Atari 2600 game Enduro simulating a driving experience. In this environment, the observation is an RGB image of the screen (simulate the view from wind screen), which is an array of shape (210, 160, 3). Each action is repeatedly performed for a duration of $k$ frames, where $k$ is uniformly sampled from $\{2, 3, 4\}$. To reduce computation overhead, we may first converse the RGB images to grayscale ones.
 
 \section{Machine learning methods}
 
-The environment-action loop in the driving experience resembles the basics of reinforcement
-learning, an area of machine learning concerned with taking actions in an environment in
-order to maximize some notion of cumulative reward. Unlike supervised learning, reinforcement
-learning does not require correct input/output pairs. Instead, reinforcement learning often
-requires a reward function in terms of different actions under the environment. For driving,
-the final reward can be no traffic accident and arrive at the destination safely.
+The environment-action loop in the driving experience resembles the basics of reinforcement learning, an area of machine learning concerned with taking actions in an environment in order to maximize some notion of cumulative reward. Unlike supervised learning, reinforcement learning does not require correct input/output pairs. Instead, reinforcement learning often requires a reward function in terms of different actions under the environment. For driving, the final reward can be no traffic accident and arrive at the destination safely.
 
 \begin{figure}
     \centering
@@ -81,15 +67,16 @@ to a new state $S_{t+1}$ and new reward $R_{t+1}$ and feedback to the agent. The
 reinforcement learning agent is to gain as much as reward as possible.
 
 
-In this proposed project, we will use the method of deep Q-learning. Q-learning defines a reward
-expectation function, $Q$, which provides the expected reward of an action $a$ taken under the
-current state $s$. This $Q$ function can be recursively defined as $Q(s,a) = R(s,a) + \alpha
-\max_{a^{'}} Q(S^{'}(s,a),a^{'})$, where $R$ is the immediate reward given action $a$ taken under
-state $s$, $\alpha$ is the discount rate of future reward and $S^{'}$ is the state transition.
-Given numerous possibilities of imagery state $s$, we cannot compute $Q$ directly. Alternatively,
-we can use a deep convolutional network to estimate $Q$.
+\begin{figure}
+	\centering
+	\includegraphics[width=0.8\textwidth]{./figures/deepq.png}
+	\caption{ Deep Q-learning Network Illustration}
+	\label{fig:deepq}
+\end{figure}
 
-TODO CNN description\\
+In this proposed project, we will use the method of deep Q-learning. Q-learning defines a reward expectation function, $Q$, which provides the expected reward of an action $a$ taken under the current state $s$. State is the image displayed and actions are all available actions of the drive. This $Q$ function can be recursively defined as $Q(s,a) = R(s,a) + \alpha \max_{a^{'}} Q(S^{'}(s,a),a^{'})$, where $R$ is the immediate reward given action $a$ taken under state $s$, $\alpha$ is the discount rate of future reward and $S^{'}$ is the state transition. Given numerous possibilities of imagery state $s$, we cannot compute $Q$ directly. Alternatively, we can use a deep convolutional network to estimate $Q$.
+
+Figure \ref{fig:deepq} illustrates a model of deep Q-learning network. First, we have several layers of convolution and max-pooling to reduce the imagery input into smaller vector. Then we have several fully-connected layer for the final decision making. The sample network shown estimates a function $Q : S \rightarrow A^n$, which takes a image input and output the expected reward for all possible actions.
 
 \section{Design of experiments and performance evaluation}
 
