@@ -55,24 +55,24 @@ The environment-action loop in the driving experience resembles the basics of re
 \begin{figure}
     \centering
     \includegraphics[width=0.8\textwidth]{./figures/rl.png}
-    \caption{ Reinforcement Learning Illustration}
+    \caption{ Reinforcement Learning Illustration \cite{rlIntroduction}}
     \label{fig:RL}
 \end{figure}
 
 
-Figure \ref{fig:RL} shows the basic model of reinforcement learning. At each time $t$, an agent receives the environment state $S_t$ and current reward $R_t$. It then chooses an action $a_t$ from the set of available actions, which is sent to the environment. The environment moves to a new state $S_{t+1}$ and new reward $R_{t+1}$ and feedback to the agent. The goal of a reinforcement learning agent is to gain as much as reward as possible.
+Figure \ref{fig:RL} shows the basic model of reinforcement learning \cite{rlIntroduction}. At each time $t$, an agent receives the environment state $S_t$ and current reward $R_t$. It then chooses an action $a_t$ from the set of available actions, which is sent to the environment. The environment moves to a new state $S_{t+1}$ and new reward $R_{t+1}$ and feedback to the agent. The goal of a reinforcement learning agent is to gain as much as reward as possible.
 
 
 \begin{figure}
 	\centering
 	\includegraphics[width=0.8\textwidth]{./figures/deepq.png}
-	\caption{ Deep Q-learning Network Illustration}
+    \caption{ Deep Q-learning Network Illustration \cite{dqn}}
 	\label{fig:deepq}
 \end{figure}
 
 In this proposed project, we will use the method of deep Q-learning. Q-learning defines a reward expectation function, $Q$, which provides the expected reward of an action $a$ taken under the current state $s$. State is the image displayed and actions are all available actions of the drive. This $Q$ function can be recursively defined as $Q(s,a) = R(s,a) + \alpha \max_{a^{'}} Q(S^{'}(s,a),a^{'})$, where $R$ is the immediate reward given action $a$ taken under state $s$, $\alpha$ is the discount rate of future reward and $S^{'}$ is the state transition. Given numerous possibilities of imagery state $s$, we cannot compute $Q$ directly. Alternatively, we can use a deep convolutional network to estimate $Q$.
 
-Figure \ref{fig:deepq} illustrates a model of deep Q-learning network. First, we have several layers of convolution and max-pooling to reduce the imagery input into smaller vector. Then we have several fully-connected layer for the final decision making. The sample network shown estimates a function $Q : S \rightarrow A^n$, which takes a image input and output the expected reward for all possible actions.
+Figure \ref{fig:deepq} illustrates a model of deep Q-learning network \cite{dqn}. First, we have several layers of convolution and max-pooling to reduce the imagery input into smaller vector. Then we have several fully-connected layer for the final decision making. The sample network shown estimates a function $Q : S \rightarrow A^n$, which takes a image input and output the expected reward for all possible actions.
 
 \section{Experiment and performance evaluation}
 
@@ -85,19 +85,19 @@ In performance evaluation, we let the self-driving agent control the car accordi
 \section {Project planning}
 
 \begin{center}
-    \begin{tabular}{ | c | c | c | } 
+    \begin{tabular}{ | c | c |  } 
         \hline
-        Timeline & Project Task & Work Distribution   \\ 
+        Timeline & Project Task    \\ 
         \hline
-        Oct 25   & system setup &   \\ 
+        Oct 25   & system setup    \\ 
         \hline
-        Oct 30   & data generation and proprocessing &   \\ 
+        Oct 30   & data generation and proprocessing    \\ 
         \hline
-        Nov 15   & algorithm  &   \\ 
+        Nov 15   & algorithm     \\ 
         \hline
-        Nov 25   & evaluation  &   \\ 
+        Nov 25   & evaluation     \\ 
         \hline
-        Nov 30   & report and video  &   \\ 
+        Nov 30   & report and video     \\ 
         \hline
     \end{tabular}
 \end{center}
@@ -122,6 +122,12 @@ In performance evaluation, we let the self-driving agent control the car accordi
 
 \bibitem{enduro}
   OpenAI Gym Enduro Environment, \texttt{https://gym.openai.com/envs/Enduro-v0}
+
+\bibitem{rlIntroduction}
+    Sutton, Richard S., Andrew G. Barto, and Francis Bach. \texttt{Reinforcement learning: An introduction.} MIT press, 1998.
+
+\bibitem{dqn}
+  Volodymyr Mnih, Koray Kavukcuoglu, et al. \texttt{Human-level control through deep reinforcement learning.} Nature, 2015.
 
 \end{thebibliography}
 \end{document}
