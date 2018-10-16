@@ -19,38 +19,27 @@
 \maketitle
 
 \begin{abstract}
-In this project proposal, we intend to build a self-driving agent that only
-relies on vision using reinforcement learning algorithms. Due to the limitation
-of real-world hardware and data, we intend to use a game simulator provided by
-OpenAI \cite{gym} to generate training data. We introduce the elements of Q-learning, a
-reinforcement learning technique which does not require a model of the environment.
+In this project proposal, we intend to build a self-driving agent that only relies on vision using reinforcement learning algorithms. Due to the limitation of real-world hardware and data, we intend to use a game simulator provided by OpenAI \cite{gym} to generate training data. We introduce the elements of Q-learning, a reinforcement learning technique which does not require a model of the environment.
 \end{abstract}
 
 \section{Application and practical significance}
 
-Self-driving car has been a hot topic in recent years. Several industry giants,
-like Google \cite{google} and Tesla Motor \cite{tesla}, have devoted significant
-efforts to the developing of self-driving cars. Letting computers to drive
-can release human beings from the boring and tiring job of driving as well as reduce the frequency of
-traffic accidents. However, designing a robust self-driving system is non-trivial
-as the real-world traffic conditions are diversed. Due to the limitation of
-hardware and computing resources, we intend to find a solution to self-driving in
-a simulated game environment.
+Self-driving car has been a hot topic in recent years. Several industry giants, like Google \cite{google} and Tesla Motor \cite{tesla}, have devoted significant efforts to the developing of self-driving cars. 
+
+Applications of self-driving agent can be wide. Example includes long-distance truck driving, smart taxi and bus, or even be incorporated into large-scale autonomous traffic systems.
+
+Letting computers to drive can release human beings from the boring and tiring job of driving as well as reduce the frequency of traffic accidents. It also opens up new business and city-management opportunities including smart traffic system and smart taxi services. Applications are wide and undiscovered and the significance of perfecting self-driving agent is huge in opening the door to these huge possibilities.
+
+However, designing a robust self-driving system is non-trivial as the real-world traffic conditions are diversed. Limited by hardware aquirement and law, we intend to find a solution to self-driving in a simulated game environment in the hope that the result can be transfered to real-world self-driving.
 
 
 \section{Problem formulation}
 
-For human drivers, the driving behavior can be formulated in a loop from an environment
-sensing input to action output. Our eyes and ears are the sensors to interpret the
-current environment, including the road view from wind screen (e.g. weather, traffic lights,
-walking people), view from side mirror (e.g. neighboring cars, following cars),
-car horns, and so on. Then our brain takes all these input signals to decide what action
-to take. The actions include turning the steering wheel, lighting turn signals, accelerating,
-braking, and so on. Once the actions are executed, the environment input changes, and again
-drivers will decide and take a new round of actions accordingly. This loop continues until
-the car arrives at the destination. Therefore, the machine learning problem in self-driving
-can be: given a set of environment input, find the best actions to execute until arriving
-at destination.
+We formulate the problem of self-driving as a continuous decision making process. The self-driving agent receives input from sensors, evaluate each possible actions and choose the best action.
+
+For human drivers, the driving behavior can be formulated in a loop from an environment sensing input to action output. Our eyes and ears are the sensors to interpret the current environment, including the road view from wind screen (e.g. weather, traffic lights, walking people), view from side mirror (e.g. neighboring cars, following cars), car horns, and so on. Then our brain takes all these input signals to decide what action to take. The actions include turning the steering wheel, lighting turn signals, accelerating, braking, and so on. Once the actions are executed, the environment input changes, and again drivers will decide and take a new round of actions accordingly. This loop continues until the car arrives at the destination. 
+
+We try to mimic how human decision works with machine learning algorithms. The machine learning problem in self-driving can be: given a set of environment input, find the best actions to execute until arriving at destination.
 
 
 \section{Data set}
