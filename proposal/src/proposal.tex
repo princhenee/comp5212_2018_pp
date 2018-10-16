@@ -46,7 +46,7 @@ We try to mimic how human decision works with machine learning algorithms. The m
 
 In this project, we intend to use the OpenAI Gym library to simulate the environment of car driving. The OpenAI Gym \cite{gym} is a toolkit for developping and comparing reinforcement algorithms. It is a collection of test problems, by providing the environments that anyone can use to test her own reinforcement learning algorithms. The environments have a shared interface, allowing any user to write general algorithms. It is a good tool as a common ground for benchmarking of machine learning models.
 
-We will focus on the environment ``Enduro-v0'', which is the Atari 2600 game Enduro simulating a driving experience. In this environment, the observation is an RGB image of the screen (simulate the view from wind screen), which is an array of shape (210, 160, 3). Each action is repeatedly performed for a duration of $k$ frames, where $k$ is uniformly sampled from $\{2, 3, 4\}$. To reduce computation overhead, we may first converse the RGB images to grayscale ones.
+We will focus on the environment ``Enduro-v0'', which is the Atari 2600 game Enduro simulating a driving experience. In this environment, the observation is an RGB image of the screen (simulate the view from wind screen), which is an array of shape (210, 160, 3). Each action is repeatedly performed for a duration of $k$ frames, where $k$ is uniformly sampled from $\{2, 3, 4\}$. To reduce computation overhead, we may first converse the RGB images to grayscale ones. The reward is the score of the game, which is related to the distance the car goes. 
 
 \section{Machine learning methods}
 
@@ -60,11 +60,7 @@ The environment-action loop in the driving experience resembles the basics of re
 \end{figure}
 
 
-Figure \ref{fig:RL} shows the basic model of reinforcement learning. At each time $t$, an agent
-receives the environment state $S_t$ and current reward $R_t$. It then chooses an action $a_t$
-from the set of available actions, which is sent to the environment. The environment moves
-to a new state $S_{t+1}$ and new reward $R_{t+1}$ and feedback to the agent. The goal of a
-reinforcement learning agent is to gain as much as reward as possible.
+Figure \ref{fig:RL} shows the basic model of reinforcement learning. At each time $t$, an agent receives the environment state $S_t$ and current reward $R_t$. It then chooses an action $a_t$ from the set of available actions, which is sent to the environment. The environment moves to a new state $S_{t+1}$ and new reward $R_{t+1}$ and feedback to the agent. The goal of a reinforcement learning agent is to gain as much as reward as possible.
 
 
 \begin{figure}
@@ -78,17 +74,15 @@ In this proposed project, we will use the method of deep Q-learning. Q-learning 
 
 Figure \ref{fig:deepq} illustrates a model of deep Q-learning network. First, we have several layers of convolution and max-pooling to reduce the imagery input into smaller vector. Then we have several fully-connected layer for the final decision making. The sample network shown estimates a function $Q : S \rightarrow A^n$, which takes a image input and output the expected reward for all possible actions.
 
-\section{Design of experiments and performance evaluation}
+\section{Experiment and performance evaluation}
 
-TODO Experiment setup\\
-TODO Performance evaluation\\
-TODO Comparison with other model\\
+Our experiment involves deep Q network training and performance evaluation. 
+
+Training is a process of random discovery. The agent is allowed to randomly choose actions in the game until game over. States, action and reward is recorded in the process and is used to train the deep Q network. We evaluate the performance in fixed game intervals to show the learning progress. Training stops when the performance does not increase over certain extend.
+
+In performance evaluation, we let the self-driving agent control the car according to the output of the deep Q network. The agent feed the image display to the network and choose the action with the highest output value in each step, until game over. We run the process for a number of times to get an average performance in each evaluation. Performance is defined as the score obtained at game over.
 
 \section {Project planning}
-
-TODO project items\\
-TODO project timeline\\
-TODO work distribution\\
 
 \begin{center}
     \begin{tabular}{ | c | c | c | } 
