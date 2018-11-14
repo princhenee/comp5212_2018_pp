@@ -2,7 +2,7 @@
 
 
 ### Usage
-#### For Linux
+#### for Linux
 To compile and generate a .pdf file 
 ```
 $cd src/
