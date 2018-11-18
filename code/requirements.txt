@@ -3,3 +3,4 @@ socketio
 eventlet
 pillow
 flask
+tensorflow
