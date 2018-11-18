@@ -1,3 +1,5 @@
 numpy
 socketio
 eventlet
+pillow
+flask
