@@ -46,7 +46,7 @@ set_speed = 30
 controller.set_desired(set_speed)
 
 reset_sent = True
-RESET_SPEED = 25
+RESET_SPEED = 0.8
 
 
 @sio.on('telemetry')
@@ -59,7 +59,7 @@ def telemetry(sid, data):
         # The current throttle of the car [0,1]
         throttle = data["throttle"]
         # The current speed of the car [0,30]
-        speed = float(data["speed"])
+        speed = float(data["speed"])/30
         # The current image from the center camera of the car (320,160,3)
         imgString = data["image"]
         print("Feedback:", steering_angle, throttle, speed)
