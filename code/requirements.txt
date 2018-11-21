@@ -1,5 +1,5 @@
 numpy
-socketio
+flask-socketio
 eventlet
 pillow
 flask
