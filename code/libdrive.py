@@ -45,28 +45,42 @@ controller = SimplePIController(0.1, 0.002)
 set_speed = 30
 controller.set_desired(set_speed)
 
+reset_sent = True
+RESET_SPEED = 25
+
 
 @sio.on('telemetry')
 def telemetry(sid, data):
+    global reset_sent
+    global RESET_SPEED
     if data:
-        # The current steering angle of the car
-        steering_angle = data["steering_angle"]
-        # The current throttle of the car
+        # The current steering angle of the car [-25,25]
+        steering_angle = float(data["steering_angle"])/25
+        # The current throttle of the car [0,1]
         throttle = data["throttle"]
-        # The current speed of the car
-        speed = data["speed"]
-        # The current image from the center camera of the car
+        # The current speed of the car [0,30]
+        speed = float(data["speed"])
+        # The current image from the center camera of the car (320,160,3)
         imgString = data["image"]
+        print("Feedback:", steering_angle, throttle, speed)
+        if speed < RESET_SPEED:
+            if not reset_sent:
+                send_reset()
+                reset_sent = True
+        else:
+            reset_sent = False
         image = Image.open(BytesIO(base64.b64decode(imgString)))
 
         image_array = np.asarray(image)
-        # steering_angle = float(model.predict(
-        #     image_array[None, :, :, :], batch_size=1))
+
+        # Control angle [-1,1]
         steering_angle = float(random.randint(-100, 100))/100
 
-        throttle = controller.update(float(speed))
+        # Control throttle [0,1]
+        throttle = float(1)
 
-        print(steering_angle, throttle)
+        print("Control:", steering_angle, throttle)
+        print()
         send_control(steering_angle, throttle)
 
         # save frame
@@ -87,7 +101,7 @@ def connect(sid, environ):
 
 @sio.on('reset')
 def reset(sid, environ):
-    pass
+    print("Reset")
 
 
 def send_control(steering_angle, throttle):
