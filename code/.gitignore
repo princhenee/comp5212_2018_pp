@@ -2,3 +2,5 @@ venv/
 .env
 .out
 .env.leave
+.vscode/
+record-img/

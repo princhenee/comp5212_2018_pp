@@ -12,9 +12,7 @@ from PIL import Image
 from flask import Flask
 from io import BytesIO
 
-from keras.models import load_model
-import h5py
-from keras import __version__ as keras_version
+import random
 
 sio = socketio.Server()
 app = Flask(__name__)
@@ -44,28 +42,45 @@ class SimplePIController:
 
 
 controller = SimplePIController(0.1, 0.002)
-set_speed = 9
+set_speed = 30
 controller.set_desired(set_speed)
+
+reset_sent = True
+RESET_SPEED = 25
 
 
 @sio.on('telemetry')
 def telemetry(sid, data):
+    global reset_sent
+    global RESET_SPEED
     if data:
-        # The current steering angle of the car
-        steering_angle = data["steering_angle"]
-        # The current throttle of the car
+        # The current steering angle of the car [-25,25]
+        steering_angle = float(data["steering_angle"])/25
+        # The current throttle of the car [0,1]
         throttle = data["throttle"]
-        # The current speed of the car
-        speed = data["speed"]
-        # The current image from the center camera of the car
+        # The current speed of the car [0,30]
+        speed = float(data["speed"])
+        # The current image from the center camera of the car (320,160,3)
         imgString = data["image"]
+        print("Feedback:", steering_angle, throttle, speed)
+        if speed < RESET_SPEED:
+            if not reset_sent:
+                send_reset()
+                reset_sent = True
+        else:
+            reset_sent = False
         image = Image.open(BytesIO(base64.b64decode(imgString)))
+
         image_array = np.asarray(image)
-        steering_angle = float(model.predict(image_array[None, :, :, :], batch_size=1))
 
-        throttle = controller.update(float(speed))
+        # Control angle [-1,1]
+        steering_angle = float(random.randint(-100, 100))/100
 
-        print(steering_angle, throttle)
+        # Control throttle [0,1]
+        throttle = float(1)
+
+        print("Control:", steering_angle, throttle)
+        print()
         send_control(steering_angle, throttle)
 
         # save frame
@@ -84,6 +99,11 @@ def connect(sid, environ):
     send_control(0, 0)
 
 
+@sio.on('reset')
+def reset(sid, environ):
+    print("Reset")
+
+
 def send_control(steering_angle, throttle):
     sio.emit(
         "steer",
@@ -94,13 +114,17 @@ def send_control(steering_angle, throttle):
         skip_sid=True)
 
 
+def send_reset():
+    sio.emit("reset", data={}, skip_sid=True)
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Remote Driving')
-    parser.add_argument(
-        'model',
-        type=str,
-        help='Path to model h5 file. Model should be on the same path.'
-    )
+    # parser.add_argument(
+    #     'model',
+    #     type=str,
+    #     help='Path to model h5 file. Model should be on the same path.'
+    # )
     parser.add_argument(
         'image_folder',
         type=str,
@@ -109,17 +133,6 @@ if __name__ == '__main__':
         help='Path to image folder. This is where the images from the run will be saved.'
     )
     args = parser.parse_args()
-
-    # check that model Keras version is same as local Keras version
-    f = h5py.File(args.model, mode='r')
-    model_version = f.attrs.get('keras_version')
-    keras_version = str(keras_version).encode('utf8')
-
-    if model_version != keras_version:
-        print('You are using Keras version ', keras_version,
-              ', but the model was built using ', model_version)
-
-    model = load_model(args.model)
 
     if args.image_folder != '':
         print("Creating image folder at {}".format(args.image_folder))
