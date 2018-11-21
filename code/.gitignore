@@ -4,3 +4,4 @@ venv/
 .env.leave
 .vscode/
 record-img/
+car-simulator-linux/
