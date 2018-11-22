@@ -13,6 +13,11 @@ from flask import Flask
 from io import BytesIO
 
 import random
+import time
+
+from models.CarAgentModel import CarAgentModel
+import tensorflow as tf
+import numpy as np
 
 sio = socketio.Server()
 app = Flask(__name__)
@@ -46,13 +51,39 @@ set_speed = 30
 controller.set_desired(set_speed)
 
 reset_sent = True
+
 RESET_SPEED = 0.8
+RESET_SPEED_DIFF = -0.4
+
+RESET_BY_SPEED = True
+RESET_BY_SPEED_DIFF = True
+
+NO_RESET_PERIOD = 5
+start_time = 0
+
+random.seed()
+RANDOM_ACTION_PROB = 0.5
+
+model = None
+sess = None
+last_timestamp = 0.0
+last_speed = 0.0
 
 
 @sio.on('telemetry')
 def telemetry(sid, data):
     global reset_sent
-    global RESET_SPEED
+    global RESET_SPEED, RESET_SPEED_DIFF
+    global RESET_BY_SPEED, RESET_BY_SPEED_DIFF
+    global RANDOM_ACTION_PROB
+    global last_timestamp, last_speed
+    global model, sess
+    global NO_RESET_PERIOD, start_time
+
+    now_timestamp = time.time()
+    time_diff = now_timestamp - last_timestamp
+    last_timestamp = now_timestamp
+
     if data:
         # The current steering angle of the car [-25,25]
         steering_angle = float(data["steering_angle"])/25
@@ -62,19 +93,41 @@ def telemetry(sid, data):
         speed = float(data["speed"])/30
         # The current image from the center camera of the car (320,160,3)
         imgString = data["image"]
-        print("Feedback:", steering_angle, throttle, speed)
-        if speed < RESET_SPEED:
-            if not reset_sent:
-                send_reset()
-                reset_sent = True
-        else:
-            reset_sent = False
+
+        speed_diff = (speed - last_speed) / time_diff
+        last_speed = speed
+
+        print("Feedback:", steering_angle, throttle, speed, speed_diff)
+
+        if time.time() - start_time > NO_RESET_PERIOD:
+            if RESET_BY_SPEED_DIFF:
+                if speed_diff < RESET_SPEED_DIFF:
+                    if not reset_sent:
+                        send_reset()
+                        reset_sent = True
+                else:
+                    reset_sent = False
+
+            if RESET_BY_SPEED:
+                if speed < RESET_SPEED:
+                    if not reset_sent:
+                        send_reset()
+                        reset_sent = True
+                else:
+                    reset_sent = False
+
         image = Image.open(BytesIO(base64.b64decode(imgString)))
 
         image_array = np.asarray(image)
 
         # Control angle [-1,1]
-        steering_angle = float(random.randint(-100, 100))/100
+        if random.random() < RANDOM_ACTION_PROB or model is None:
+            steering_angle = float(random.randint(-100, 100))/100
+        else:
+            max_index = np.argmax(sess.run(model.inference(
+                [image_array, speed, steering_angle])))
+            max_index -= 128
+            steering_angle = float(max_index) / 128
 
         # Control throttle [0,1]
         throttle = float(1)
@@ -84,9 +137,9 @@ def telemetry(sid, data):
         send_control(steering_angle, throttle)
 
         # save frame
-        if args.image_folder != '':
+        if args.record_path != '':
             timestamp = datetime.utcnow().strftime('%Y_%m_%d_%H_%M_%S_%f')[:-3]
-            image_filename = os.path.join(args.image_folder, timestamp)
+            image_filename = os.path.join(args.record_path, timestamp)
             image.save('{}.jpg'.format(image_filename))
     else:
         # NOTE: DON'T EDIT THIS.
@@ -95,6 +148,8 @@ def telemetry(sid, data):
 
 @sio.on('connect')
 def connect(sid, environ):
+    global start_time
+    start_time = time.time()
     print("connect ", sid)
     send_control(0, 0)
 
@@ -120,27 +175,35 @@ def send_reset():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Remote Driving')
-    # parser.add_argument(
-    #     'model',
-    #     type=str,
-    #     help='Path to model h5 file. Model should be on the same path.'
-    # )
     parser.add_argument(
-        'image_folder',
+        'model',
         type=str,
         nargs='?',
         default='',
-        help='Path to image folder. This is where the images from the run will be saved.'
+        help='Path to model checkpoint path.'
+    )
+    parser.add_argument(
+        'record_path',
+        type=str,
+        nargs='?',
+        default='',
+        help='Path to recording folder. This is where the images from the run will be saved.'
     )
     args = parser.parse_args()
 
-    if args.image_folder != '':
-        print("Creating image folder at {}".format(args.image_folder))
-        if not os.path.exists(args.image_folder):
-            os.makedirs(args.image_folder)
+    if args.model != '':
+        model_checkpoint_path = args.model
+        model = CarAgentModel("car_agent", model_checkpoint_path)
+        sess = tf.Session()
+        model.load(sess)
+
+    if args.record_path != '':
+        print("Creating image folder at {}".format(args.record_path))
+        if not os.path.exists(args.record_path):
+            os.makedirs(args.record_path)
         else:
-            shutil.rmtree(args.image_folder)
-            os.makedirs(args.image_folder)
+            shutil.rmtree(args.record_path)
+            os.makedirs(args.record_path)
         print("RECORDING THIS RUN ...")
     else:
         print("NOT RECORDING THIS RUN ...")

@@ -1,5 +1,5 @@
 import tensorflow as tf
-from Model import Model
+from models.Model import Model
 
 
 class CarAgentModel(Model):
@@ -56,12 +56,12 @@ class CarAgentModel(Model):
                     "relu6_b",
                     shape=[256],
                     initializer=tf.initializers.random_normal()),
-                "logit_w": tf.get_variable(
-                    "logit_w",
+                "logits_w": tf.get_variable(
+                    "logits_w",
                     shape=[256, 256],
                     initializer=tf.initializers.random_normal()),
-                "logit_b": tf.get_variable(
-                    "logit_b",
+                "logits_b": tf.get_variable(
+                    "logits_b",
                     shape=[256],
                     initializer=tf.initializers.random_normal())
             }
@@ -69,6 +69,7 @@ class CarAgentModel(Model):
 
     def inference(self, X):
         image_array = tf.convert_to_tensor(X[0])  # (?,320,160,3)
+        image_array = tf.reshape(image_array, [-1, 320, 160, 3])
         speed = tf.convert_to_tensor([X[1]])  # [0,1]
         steering_angle = tf.convert_to_tensor([X[2]])  # [-1,1]
 
@@ -152,11 +153,11 @@ class CarAgentModel(Model):
                 self._parameters["relu8_b"]),
             name="relu8")  # (256)
 
-        logit = tf.add(
-            tf.matmul(relu8, self._parameters["logit_w"]),
-            self._parameters["logit_b"])
+        logits = tf.add(
+            tf.matmul(relu8, self._parameters["logits_w"]),
+            self._parameters["logits_b"])
 
-        return logit  # (256) [-128,127]
+        return logits  # (256) [-128,127]
 
     def parameters(self):
         return list(self._parameters.values())
