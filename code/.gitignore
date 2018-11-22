@@ -4,4 +4,8 @@ venv/
 .env.leave
 .vscode/
 record-img/
+<<<<<<< Updated upstream
 car-simulator-linux/
+=======
+
+>>>>>>> Stashed changes
