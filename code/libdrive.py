@@ -15,7 +15,7 @@ from io import BytesIO
 import random
 import time
 
-from models.CarAgentModel import CarAgentModel
+from models.QValueModel import QValueModel
 import tensorflow as tf
 import numpy as np
 
@@ -95,6 +95,7 @@ def telemetry(sid, data):
         imgString = data["image"]
 
         speed_diff = (speed - last_speed) / time_diff
+        last_reward = speed - last_speed
         last_speed = speed
 
         print("Feedback:", steering_angle, throttle, speed, speed_diff)
