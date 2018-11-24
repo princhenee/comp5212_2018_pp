@@ -5,3 +5,4 @@ venv/
 .vscode/
 record-img/
 car-simulator-linux/
+__pycache__/
