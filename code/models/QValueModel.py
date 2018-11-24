@@ -2,7 +2,7 @@ import tensorflow as tf
 from models.Model import Model
 
 
-class CarAgentModel(Model):
+class QValueModel(Model):
     def __init__(self, model_name: str, save_path: str):
         self._model_name = model_name
         self._save_path = save_path
@@ -65,13 +65,13 @@ class CarAgentModel(Model):
                     shape=[256],
                     initializer=tf.initializers.random_normal())
             }
-        raise NotImplementedError
 
     def inference(self, X):
         image_array = tf.convert_to_tensor(X[0])  # (?,320,160,3)
         image_array = tf.reshape(image_array, [-1, 320, 160, 3])
         speed = tf.convert_to_tensor([X[1]])  # [0,1]
         steering_angle = tf.convert_to_tensor([X[2]])  # [-1,1]
+        next_action = tf.convert_to_tensor([X[3]])
 
         conv1 = tf.nn.conv2d(
             image_array,
@@ -127,7 +127,7 @@ class CarAgentModel(Model):
             name="pool4")  # (?,19,9,128)
 
         reshape1 = tf.concat(
-            [tf.reshape(pool4, [-1]), speed, steering_angle], 0)
+            [tf.reshape(pool4, [-1]), speed, steering_angle, next_action], 0)
 
         relu5 = tf.nn.leaky_relu(
             tf.add(
@@ -153,11 +153,11 @@ class CarAgentModel(Model):
                 self._parameters["relu8_b"]),
             name="relu8")  # (256)
 
-        logits = tf.add(
-            tf.matmul(relu8, self._parameters["logits_w"]),
-            self._parameters["logits_b"])
+        q = tf.add(
+            tf.matmul(relu8, self._parameters["q_w"]),
+            self._parameters["q_b"])
 
-        return logits  # (256) [-128,127]
+        return q  # (1) [-128,127]
 
     def parameters(self):
         return list(self._parameters.values())

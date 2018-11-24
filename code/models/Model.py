@@ -14,10 +14,10 @@ class Model:
     def initialize_parameters(self):
         raise NotImplementedError
 
-    def save(self):
+    def save(self, sess: tf.Session()):
         raise NotImplementedError
 
-    def load(self):
+    def load(self, sess: tf.Session()):
         raise NotImplementedError
 
     def train_operation(self):
