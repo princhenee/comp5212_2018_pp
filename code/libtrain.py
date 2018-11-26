@@ -4,9 +4,6 @@ import tensorflow as tf
 import math
 import collections
 import random
-from debug_printer import debug_printer as dbg
-
-random.seed()
 
 
 class DeterministicPolicyGradientAlgorithm:
@@ -19,7 +16,7 @@ class DeterministicPolicyGradientAlgorithm:
             name: str,
             save_path: str,
             action_exploration_distribution=tf.distributions.Normal(
-                0.0, 0.2),
+                0.0, 0.5),
             sess: tf.Session = tf.Session()):
 
         self.future_reward_discount = future_reward_discount
@@ -45,20 +42,17 @@ class DeterministicPolicyGradientAlgorithm:
         rewards = transitions[2]
         next_states = transitions[3]
 
-        if next_states is None:
-            y = tf.zeros((batch_size,))
-        else:
-            next_target_action = self.target_actor.inference([next_states])
-            next_target_critic = self.target_critic.inference(
-                [next_states, next_target_action])
+        next_target_action = self.target_actor.inference([next_states])
+        next_target_critic = self.target_critic.inference(
+            [next_states, next_target_action])
 
-            y = tf.add(
-                tf.scalar_mul(
-                    self.future_reward_discount,
-                    next_target_critic
-                ),
-                rewards
-            )
+        y = tf.add(
+            tf.scalar_mul(
+                self.future_reward_discount,
+                next_target_critic
+            ),
+            rewards
+        )
 
         return y
 
@@ -127,16 +121,18 @@ class DeterministicPolicyGradientAlgorithm:
 
     def exploration_action(self, states):
         action_exploration = self.actor.inference(
-            [states]) + self.action_exploration_distribution.sample()
-        values = self.sess.run(action_exploration)
-        return values
+            [states])
+        action_exploration = action_exploration * 2 - 1
+        action_exploration += self.action_exploration_distribution.sample()
+        value = self.sess.run(action_exploration)[0][0]
+        value = max(-1, value)
+        value = min(1, value)
+        return value
 
     def push_buffer(self, transition: tuple):
         self.replay_buffer.append(transition)
 
-    def step(self, transition: tuple):
-        dbg()
-        self.push_buffer(transition)
+    def step(self):
         sample_size = math.ceil(
             self.sample_proportion * len(self.replay_buffer))
         sample = [self.replay_buffer[i]
@@ -144,24 +140,33 @@ class DeterministicPolicyGradientAlgorithm:
                       range(len(self.replay_buffer)),
                       sample_size)]
 
-        dbg()
-        states = []
+        image = []
+        speed = []
         actions = []
         rewards = []
-        next_states = []
+        next_image = []
+        next_speed = []
         for t in sample:
-            states.append((t[0][0], t[0][1]))
-            actions.append(t[1])
-            rewards.append(t[2])
-            next_states.append(t[3])
-        transitions = (states, actions, rewards, next_states)
-        dbg()
+            image.append(t[0])
+            speed.append(t[1])
+            actions.append(t[2])
+            rewards.append(t[3])
+            next_image.append(t[4])
+            next_speed.append(t[5])
+
+        image = tf.stack(image)
+        speed = tf.convert_to_tensor(speed)
+        actions = tf.convert_to_tensor(actions)
+        next_image = tf.stack(next_image)
+        next_speed = tf.convert_to_tensor(next_speed)
+        transitions = (
+            (image, speed),
+            actions,
+            rewards,
+            (next_image, next_speed))
         self.optimize(transitions, len(sample))
-        dbg()
         self.update_target()
-        dbg()
         self.save()
-        dbg()
 
     def save(self):
         self.critic.save(self.sess)
