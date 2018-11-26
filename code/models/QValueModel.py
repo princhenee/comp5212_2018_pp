@@ -3,68 +3,132 @@ from models.Model import Model
 
 
 class QValueModel(Model):
-    def __init__(self, model_name: str, save_path: str):
+    def __init__(
+            self,
+            model_name: str,
+            save_path: str,
+            param_init: dict = None):
         self._model_name = model_name
         self._save_path = save_path
-        with tf.variable_scope("CarAgent_%s" % model_name):
-            self._parameters = {
-                "conv1_w": tf.get_variable(
-                    "conv1_w",
-                    shape=[3, 3, 3, 32],
-                    initializer=tf.initializers.random_normal()),
-                "conv2_w": tf.get_variable(
-                    "conv2_w",
-                    shape=[2, 2, 32, 32],
-                    initializer=tf.initializers.random_normal()),
-                "conv3_w": tf.get_variable(
-                    "conv3_w",
-                    shape=[2, 2, 32, 64],
-                    initializer=tf.initializers.random_normal()),
-                "conv4_w": tf.get_variable(
-                    "conv4_w",
-                    shape=[2, 2, 64, 128],
-                    initializer=tf.initializers.random_normal()),
-                "relu5_w": tf.get_variable(
-                    "relu5_w",
-                    shape=[19*9*128 + 2, 1024],
-                    initializer=tf.initializers.random_normal()),
-                "relu5_b": tf.get_variable(
-                    "relu5_b",
-                    shape=[1024],
-                    initializer=tf.initializers.random_normal()),
-                "relu6_w": tf.get_variable(
-                    "relu6_w",
-                    shape=[1024, 512],
-                    initializer=tf.initializers.random_normal()),
-                "relu6_b": tf.get_variable(
-                    "relu6_b",
-                    shape=[512],
-                    initializer=tf.initializers.random_normal()),
-                "relu7_w": tf.get_variable(
-                    "relu6_w",
-                    shape=[512, 256],
-                    initializer=tf.initializers.random_normal()),
-                "relu7_b": tf.get_variable(
-                    "relu6_b",
-                    shape=[256],
-                    initializer=tf.initializers.random_normal()),
-                "relu8_w": tf.get_variable(
-                    "relu6_w",
-                    shape=[256, 256],
-                    initializer=tf.initializers.random_normal()),
-                "relu8_b": tf.get_variable(
-                    "relu6_b",
-                    shape=[256],
-                    initializer=tf.initializers.random_normal()),
-                "logits_w": tf.get_variable(
-                    "logits_w",
-                    shape=[256, 256],
-                    initializer=tf.initializers.random_normal()),
-                "logits_b": tf.get_variable(
-                    "logits_b",
-                    shape=[256],
-                    initializer=tf.initializers.random_normal())
-            }
+        with tf.variable_scope("QValueModel_%s" % model_name):
+            if param_init is None:
+                self._parameters = {
+                    "conv1_w": tf.get_variable(
+                        "conv1_w",
+                        shape=[3, 3, 3, 32],
+                        initializer=tf.initializers.random_normal()),
+                    "conv2_w": tf.get_variable(
+                        "conv2_w",
+                        shape=[2, 2, 32, 32],
+                        initializer=tf.initializers.random_normal()),
+                    "conv3_w": tf.get_variable(
+                        "conv3_w",
+                        shape=[2, 2, 32, 64],
+                        initializer=tf.initializers.random_normal()),
+                    "conv4_w": tf.get_variable(
+                        "conv4_w",
+                        shape=[2, 2, 64, 128],
+                        initializer=tf.initializers.random_normal()),
+                    "relu5_w": tf.get_variable(
+                        "relu5_w",
+                        shape=[19*9*128 + 2, 1024],
+                        initializer=tf.initializers.random_normal()),
+                    "relu5_b": tf.get_variable(
+                        "relu5_b",
+                        shape=[1024],
+                        initializer=tf.initializers.random_normal()),
+                    "relu6_w": tf.get_variable(
+                        "relu6_w",
+                        shape=[1024, 512],
+                        initializer=tf.initializers.random_normal()),
+                    "relu6_b": tf.get_variable(
+                        "relu6_b",
+                        shape=[512],
+                        initializer=tf.initializers.random_normal()),
+                    "relu7_w": tf.get_variable(
+                        "relu6_w",
+                        shape=[512, 256],
+                        initializer=tf.initializers.random_normal()),
+                    "relu7_b": tf.get_variable(
+                        "relu6_b",
+                        shape=[256],
+                        initializer=tf.initializers.random_normal()),
+                    "relu8_w": tf.get_variable(
+                        "relu6_w",
+                        shape=[256, 256],
+                        initializer=tf.initializers.random_normal()),
+                    "relu8_b": tf.get_variable(
+                        "relu6_b",
+                        shape=[256],
+                        initializer=tf.initializers.random_normal()),
+                    "q_w": tf.get_variable(
+                        "q_w",
+                        shape=[256, 1],
+                        initializer=tf.initializers.random_normal()),
+                    "q_b": tf.get_variable(
+                        "q_b",
+                        shape=[1],
+                        initializer=tf.initializers.random_normal())
+                }
+            else:
+                self._parameters = {
+                    "conv1_w": tf.get_variable(
+                        "conv1_w",
+                        shape=[3, 3, 3, 32],
+                        initializer=param_init["conv1_w"]),
+                    "conv2_w": tf.get_variable(
+                        "conv2_w",
+                        shape=[2, 2, 32, 32],
+                        initializer=param_init["conv2_w"]),
+                    "conv3_w": tf.get_variable(
+                        "conv3_w",
+                        shape=[2, 2, 32, 64],
+                        initializer=param_init["conv3_w"]),
+                    "conv4_w": tf.get_variable(
+                        "conv4_w",
+                        shape=[2, 2, 64, 128],
+                        initializer=param_init["conv4_w"]),
+                    "relu5_w": tf.get_variable(
+                        "relu5_w",
+                        shape=[19*9*128 + 2, 1024],
+                        initializer=param_init["relu5_w"]),
+                    "relu5_b": tf.get_variable(
+                        "relu5_b",
+                        shape=[1024],
+                        initializer=param_init["relu5_b"]),
+                    "relu6_w": tf.get_variable(
+                        "relu6_w",
+                        shape=[1024, 512],
+                        initializer=param_init["relu6_w"]),
+                    "relu6_b": tf.get_variable(
+                        "relu6_b",
+                        shape=[512],
+                        initializer=param_init["relu6_b"]),
+                    "relu7_w": tf.get_variable(
+                        "relu7_w",
+                        shape=[512, 256],
+                        initializer=param_init["relu7_w"]),
+                    "relu7_b": tf.get_variable(
+                        "relu7_b",
+                        shape=[256],
+                        initializer=param_init["relu7_b"]),
+                    "relu8_w": tf.get_variable(
+                        "relu8_w",
+                        shape=[256, 256],
+                        initializer=param_init["relu8_w"]),
+                    "relu8_b": tf.get_variable(
+                        "relu8_b",
+                        shape=[256],
+                        initializer=param_init["relu8_b"]),
+                    "q_w": tf.get_variable(
+                        "q_w",
+                        shape=[256, 1],
+                        initializer=param_init["q_w"]),
+                    "q_b": tf.get_variable(
+                        "q_b",
+                        shape=[1],
+                        initializer=param_init["q_b"])
+                }
 
     def inference(self, X):
         image_array = tf.convert_to_tensor(X[0])  # (?,320,160,3)
@@ -179,6 +243,9 @@ class QValueModel(Model):
             save_relative_paths=True,
             filename=self._model_name)
         saver.restore(sess, self._save_path)
+
+    def copy(self, model_name: str, save_path: str):
+        return QValueModel(model_name, save_path, self._parameters)
 
     def train_operation(self):
         raise NotImplementedError

@@ -20,6 +20,9 @@ class Model:
     def load(self, sess: tf.Session()):
         raise NotImplementedError
 
+    def copy(self, model_name: str, save_path: str):
+        raise NotImplementedError
+
     def train_operation(self):
         raise NotImplementedError
 
