@@ -114,7 +114,7 @@ class DeterministicPolicyGradientAlgorithm:
             self,
             transitions: list,
             batch_size: int,
-            optimizer=tf.train.GradientDescentOptimizer(0.01)):
+            optimizer=tf.train.GradientDescentOptimizer(0.00001)):
 
         self.sess.run(optimizer.minimize(
             self.critic_loss(transitions, batch_size),

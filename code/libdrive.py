@@ -59,14 +59,14 @@ RESET_BY_SPEED = True
 RESET_BY_SPEED_DIFF = True
 
 NO_RESET_PERIOD = 5
-start_time = 0
+start_time = time.time()
 
 random.seed()
 RANDOM_ACTION_PROB = 0.5
 
 algo = None
 sess = None
-last_timestamp = 0.0
+last_timestamp = start_time
 last_speed = 0.0
 
 last_state = None
@@ -103,32 +103,37 @@ def telemetry(sid, data):
         last_reward = time_diff
         last_speed = speed
 
-        print('{"steering_angle":%d,"speed":%d,"time_diff":%d,"time_elasped":%d}' % (
+        print('{"steering_angle":%f,"speed":%f,"time_diff":%f,"time_elasped":%f}' % (
             steering_angle,
             speed,
             time_diff,
             time_elasped))
 
         image = Image.open(BytesIO(base64.b64decode(imgString)))
-        image_array = tf.convert_to_tensor(
-            np.asarray(image, dtype=np.float64))
-        speed = tf.convert_to_tensor([speed])
-        state = (image_array, speed)
+        image_array = np.divide(np.asarray(image), 256).astype(np.float32)
+        image_array = tf.convert_to_tensor(image_array)
+        image_array = tf.transpose(image_array, [1, 0, 2])
+        image_array = tf.reshape(image_array, [-1, 320, 160, 3])
+        tfspeed = tf.convert_to_tensor([[speed]])
+        state = (image_array, tfspeed)
 
         if time.time() - start_time > NO_RESET_PERIOD:
             if RESET_BY_SPEED_DIFF:
                 if speed_diff < RESET_SPEED_DIFF:
                     if not reset_sent:
                         send_reset()
-                        if last_state is not None and algo is not None:
-                            algo.step(
-                                (
-                                    last_state,
-                                    last_action,
-                                    0,
-                                    None))
-                            start_time = time.time()
+                        if last_state is not None:
+                            if algo is not None:
+                                algo.step(
+                                    (
+                                        last_state,
+                                        last_action,
+                                        0,
+                                        None))
                             print('{"DPG":"step","reset":true}')
+                        start_time = time.time()
+                        last_state = None
+                        last_action = None
                         reset_sent = True
                 else:
                     reset_sent = False
@@ -137,37 +142,40 @@ def telemetry(sid, data):
                 if speed < RESET_SPEED:
                     if not reset_sent:
                         send_reset()
-                        if last_state is not None and algo is not None:
-                            algo.step(
-                                (
-                                    last_state,
-                                    last_action,
-                                    0,
-                                    None))
-                            start_time = time.time()
+                        if last_state is not None:
+                            if algo is not None:
+                                algo.step(
+                                    (
+                                        last_state,
+                                        last_action,
+                                        0,
+                                        None))
                             print('{"DPG":"step","reset":true}')
+                        start_time = time.time()
+                        last_state = None
+                        last_action = None
                         reset_sent = True
                 else:
                     reset_sent = False
 
-        if last_state is not None and algo is not None and not reset_sent:
-            algo.step((last_state, last_action, last_reward, state))
-            print('{"DPG":"step","reset":false}')
+        if last_state is not None:
+            if algo is not None and not reset_sent:
+                algo.step((last_state, last_action, last_reward, state))
+                print('{"DPG":"step","reset":false}')
         last_state = state
 
         # Control angle [-1,1]
-        steering_angle = float(algo.exploration_action(state)[0])
-        steering_angle = max(0, steering_angle)
-        steering_angle = min(1, steering_angle)
+        action = algo.exploration_action(state)
+        steering_angle = action
         steering_angle = steering_angle * 2 - 1
         last_action = steering_angle
 
         # Control throttle [0,1]
         throttle = float(1)
 
-        print('{"control":{"steering_angle":%d,"throttle":%d}}' %
-              (steering_angle, throttle))
         send_control(steering_angle, throttle)
+        print('{"control":{"steering_angle":%f,"throttle":%f}}' %
+              (steering_angle, throttle))
 
         # save frame
         if args.record_path != '':
@@ -252,5 +260,3 @@ if __name__ == '__main__':
 
     # deploy as an eventlet WSGI server
     eventlet.wsgi.server(eventlet.listen(('', 4567)), app)
-
-    start_time = time.time()

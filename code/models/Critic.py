@@ -32,60 +32,46 @@ class Critic(Model):
             self._parameters = {
                     "conv1_w": tf.get_variable(
                         "conv1_w",
-                        shape=[3, 3, 3, 32],
-                        initializer=tf.initializers.random_normal()),
+                        shape=[3, 3, 3, 32]),
                     "conv2_w": tf.get_variable(
                         "conv2_w",
-                        shape=[2, 2, 32, 32],
-                        initializer=tf.initializers.random_normal()),
+                        shape=[2, 2, 32, 32]),
                     "conv3_w": tf.get_variable(
                         "conv3_w",
-                        shape=[2, 2, 32, 64],
-                        initializer=tf.initializers.random_normal()),
+                        shape=[2, 2, 32, 64]),
                     "conv4_w": tf.get_variable(
                         "conv4_w",
-                        shape=[2, 2, 64, 128],
-                        initializer=tf.initializers.random_normal()),
+                        shape=[2, 2, 64, 128]),
                     "relu5_w": tf.get_variable(
                         "relu5_w",
-                        shape=[19*9*128 + 2, 1024],
-                        initializer=tf.initializers.random_normal()),
+                        shape=[20*10*128 + 2, 1024]),
                     "relu5_b": tf.get_variable(
                         "relu5_b",
-                        shape=[1024],
-                        initializer=tf.initializers.random_normal()),
+                        shape=[1024]),
                     "relu6_w": tf.get_variable(
                         "relu6_w",
-                        shape=[1024, 512],
-                        initializer=tf.initializers.random_normal()),
+                        shape=[1024, 512]),
                     "relu6_b": tf.get_variable(
                         "relu6_b",
-                        shape=[512],
-                        initializer=tf.initializers.random_normal()),
+                        shape=[512]),
                     "relu7_w": tf.get_variable(
                         "relu7_w",
-                        shape=[512, 256],
-                        initializer=tf.initializers.random_normal()),
+                        shape=[512, 256]),
                     "relu7_b": tf.get_variable(
                         "relu7_b",
-                        shape=[256],
-                        initializer=tf.initializers.random_normal()),
+                        shape=[256]),
                     "relu8_w": tf.get_variable(
                         "relu8_w",
-                        shape=[256, 256],
-                        initializer=tf.initializers.random_normal()),
+                        shape=[256, 256]),
                     "relu8_b": tf.get_variable(
                         "relu8_b",
-                        shape=[256],
-                        initializer=tf.initializers.random_normal()),
+                        shape=[256]),
                     "q_w": tf.get_variable(
                         "q_w",
-                        shape=[256, 1],
-                        initializer=tf.initializers.random_normal()),
+                        shape=[256, 1]),
                     "q_b": tf.get_variable(
                         "q_b",
-                        shape=[1],
-                        initializer=tf.initializers.random_normal()),
+                        shape=[1]),
                 }
 
     def inference(self, X, is_target=False):
@@ -93,11 +79,11 @@ class Critic(Model):
         states = X[0]
         actions = X[1]# (?) [0,1]
 
-        states_image = states[0]# (?,320,160,3)
-        states_speed = states[1]# (?) [0,1]
+        image = states[0]# (?,320,160,3)
+        speed = states[1]# (?) [0,1]
 
         conv1 = tf.nn.conv2d(
-            states_image,
+            image,
             self._parameters["conv1_w"],
             [1, 1, 1, 1],
             "SAME",
@@ -150,7 +136,8 @@ class Critic(Model):
             name="pool4")  # (?,19,9,128)
 
         reshape1 = tf.concat(
-            [tf.reshape(pool4, [-1]), states_speed, actions], 0)
+            [tf.reshape(pool4, [-1, 20*10*128]), speed, actions],
+            1)
 
         relu5 = tf.nn.leaky_relu(
             tf.add(
