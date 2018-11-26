@@ -15,13 +15,13 @@ from io import BytesIO
 import random
 import time
 
-from models.QValueModel import QValueModel
+from libtrain import DeterministicPolicyGradientAlgorithm
 import tensorflow as tf
 import numpy as np
 
 sio = socketio.Server()
 app = Flask(__name__)
-model = None
+algo = None
 prev_image_array = None
 
 
@@ -64,10 +64,13 @@ start_time = 0
 random.seed()
 RANDOM_ACTION_PROB = 0.5
 
-model = None
+algo = None
 sess = None
 last_timestamp = 0.0
 last_speed = 0.0
+
+last_state = None
+last_action = None
 
 
 @sio.on('telemetry')
@@ -77,12 +80,14 @@ def telemetry(sid, data):
     global RESET_BY_SPEED, RESET_BY_SPEED_DIFF
     global RANDOM_ACTION_PROB
     global last_timestamp, last_speed
-    global model, sess
+    global algo, sess
     global NO_RESET_PERIOD, start_time
+    global last_state, last_action
 
     now_timestamp = time.time()
     time_diff = now_timestamp - last_timestamp
     last_timestamp = now_timestamp
+    time_elasped = now_timestamp - start_time
 
     if data:
         # The current steering angle of the car [-25,25]
@@ -95,16 +100,35 @@ def telemetry(sid, data):
         imgString = data["image"]
 
         speed_diff = (speed - last_speed) / time_diff
-        last_reward = speed - last_speed
+        last_reward = time_diff
         last_speed = speed
 
-        print("Feedback:", steering_angle, throttle, speed, speed_diff)
+        print('{"steering_angle":%d,"speed":%d,"time_diff":%d,"time_elasped":%d}' % (
+            steering_angle,
+            speed,
+            time_diff,
+            time_elasped))
+
+        image = Image.open(BytesIO(base64.b64decode(imgString)))
+        image_array = tf.convert_to_tensor(
+            np.asarray(image, dtype=np.float64))
+        speed = tf.convert_to_tensor([speed])
+        state = (image_array, speed)
 
         if time.time() - start_time > NO_RESET_PERIOD:
             if RESET_BY_SPEED_DIFF:
                 if speed_diff < RESET_SPEED_DIFF:
                     if not reset_sent:
                         send_reset()
+                        if last_state is not None and algo is not None:
+                            algo.step(
+                                (
+                                    last_state,
+                                    last_action,
+                                    0,
+                                    None))
+                            start_time = time.time()
+                            print('{"DPG":"step","reset":true}')
                         reset_sent = True
                 else:
                     reset_sent = False
@@ -113,28 +137,36 @@ def telemetry(sid, data):
                 if speed < RESET_SPEED:
                     if not reset_sent:
                         send_reset()
+                        if last_state is not None and algo is not None:
+                            algo.step(
+                                (
+                                    last_state,
+                                    last_action,
+                                    0,
+                                    None))
+                            start_time = time.time()
+                            print('{"DPG":"step","reset":true}')
                         reset_sent = True
                 else:
                     reset_sent = False
 
-        image = Image.open(BytesIO(base64.b64decode(imgString)))
-
-        image_array = np.asarray(image)
+        if last_state is not None and algo is not None and not reset_sent:
+            algo.step((last_state, last_action, last_reward, state))
+            print('{"DPG":"step","reset":false}')
+        last_state = state
 
         # Control angle [-1,1]
-        if random.random() < RANDOM_ACTION_PROB or model is None:
-            steering_angle = float(random.randint(-100, 100))/100
-        else:
-            max_index = np.argmax(sess.run(model.inference(
-                [image_array, speed, steering_angle])))
-            max_index -= 128
-            steering_angle = float(max_index) / 128
+        steering_angle = float(algo.exploration_action(state)[0])
+        steering_angle = max(0, steering_angle)
+        steering_angle = min(1, steering_angle)
+        steering_angle = steering_angle * 2 - 1
+        last_action = steering_angle
 
         # Control throttle [0,1]
         throttle = float(1)
 
-        print("Control:", steering_angle, throttle)
-        print()
+        print('{"control":{"steering_angle":%d,"throttle":%d}}' %
+              (steering_angle, throttle))
         send_control(steering_angle, throttle)
 
         # save frame
@@ -194,9 +226,15 @@ if __name__ == '__main__':
 
     if args.model != '':
         model_checkpoint_path = args.model
-        model = CarAgentModel("car_agent", model_checkpoint_path)
-        sess = tf.Session()
-        model.load(sess)
+        algo = DeterministicPolicyGradientAlgorithm(
+            0.5,
+            0.9,
+            128,
+            0.6,
+            "car_agent",
+            model_checkpoint_path)
+        sess = algo.sess
+        algo.load()
 
     if args.record_path != '':
         print("Creating image folder at {}".format(args.record_path))
@@ -214,3 +252,5 @@ if __name__ == '__main__':
 
     # deploy as an eventlet WSGI server
     eventlet.wsgi.server(eventlet.listen(('', 4567)), app)
+
+    start_time = time.time()

@@ -21,7 +21,7 @@ class Model:
     def load(self, sess: tf.Session()):
         raise NotImplementedError
 
-    def sync(self, target: Model):
+    def sync(self, target):
         raise NotImplementedError
 
     def copy(self, model_name: str, save_path: str):

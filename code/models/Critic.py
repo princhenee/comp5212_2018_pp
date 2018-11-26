@@ -51,7 +51,7 @@ class Critic(Model):
                         shape=[19*9*128 + 2, 1024],
                         initializer=tf.initializers.random_normal()),
                     "relu5_b": tf.get_variable(
-                        "GradientDescentOptimizerrelu5_b",
+                        "relu5_b",
                         shape=[1024],
                         initializer=tf.initializers.random_normal()),
                     "relu6_w": tf.get_variable(
@@ -73,7 +73,7 @@ class Critic(Model):
                     "relu8_w": tf.get_variable(
                         "relu8_w",
                         shape=[256, 256],
-                      GradientDescentOptimizer initializer=tf.initializers.random_normal()),
+                        initializer=tf.initializers.random_normal()),
                     "relu8_b": tf.get_variable(
                         "relu8_b",
                         shape=[256],
@@ -193,16 +193,16 @@ class Critic(Model):
             self.parameters(),
             save_relative_paths=True,
             filename=self._model_name)
-        saver.save(sess, self._save_path)
+        saver.save(sess, "%s/%s_critic"%(self._save_path,self._model_name))
 
     def load(self, sess: tf.Session):
         saver = tf.train.Saver(
             self.parameters(),
             save_relative_paths=True,
             filename=self._model_name)
-        saver.restore(sess, self._save_path)
+        saver.restore(sess, "%s/%s_critic"%(self._save_path,self._model_name))
 
-    def sync(self, target:Critic, sess:tf.Session):
+    def sync(self, target, sess:tf.Session):
         """Sync the parameter value of self to target.
         
         Arguments:

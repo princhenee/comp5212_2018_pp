@@ -194,16 +194,16 @@ class Actor(Model):
             self.parameters(),
             save_relative_paths=True,
             filename=self._model_name)
-        saver.save(sess, self._save_path)
+        saver.save(sess, "%s/%s_actor"%(self._save_path,self._model_name))
 
     def load(self, sess: tf.Session):
         saver = tf.train.Saver(
             self.parameters(),
             save_relative_paths=True,
             filename=self._model_name)
-        saver.restore(sess, self._save_path)
+        saver.restore(sess, "%s/%s_actor"%(self._save_path,self._model_name))
 
-    def sync(self, target:Actor, sess: tf.Session):
+    def sync(self, target, sess: tf.Session):
         """Sync the parameter value of self to target.
         
         Arguments:
