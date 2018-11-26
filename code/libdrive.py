@@ -18,6 +18,7 @@ import time
 from libtrain import DeterministicPolicyGradientAlgorithm
 import tensorflow as tf
 import numpy as np
+from debug_printer import debug_printer as dbg
 
 sio = socketio.Server()
 app = Flask(__name__)
@@ -117,27 +118,7 @@ def telemetry(sid, data):
         tfspeed = tf.convert_to_tensor([[speed]])
         state = (image_array, tfspeed)
 
-        if time.time() - start_time > NO_RESET_PERIOD:
-            if RESET_BY_SPEED_DIFF:
-                if speed_diff < RESET_SPEED_DIFF:
-                    if not reset_sent:
-                        send_reset()
-                        if last_state is not None:
-                            if algo is not None:
-                                algo.step(
-                                    (
-                                        last_state,
-                                        last_action,
-                                        0,
-                                        None))
-                            print('{"DPG":"step","reset":true}')
-                        start_time = time.time()
-                        last_state = None
-                        last_action = None
-                        reset_sent = True
-                else:
-                    reset_sent = False
-
+        if now_timestamp - start_time > NO_RESET_PERIOD:
             if RESET_BY_SPEED:
                 if speed < RESET_SPEED:
                     if not reset_sent:
@@ -158,10 +139,10 @@ def telemetry(sid, data):
                 else:
                     reset_sent = False
 
-        if last_state is not None:
-            if algo is not None and not reset_sent:
-                algo.step((last_state, last_action, last_reward, state))
-                print('{"DPG":"step","reset":false}')
+        # if last_state is not None:
+        #     if algo is not None and not reset_sent:
+        #         algo.step((last_state, last_action, last_reward, state))
+        #         print('{"DPG":"step","reset":false}')
         last_state = state
 
         # Control angle [-1,1]

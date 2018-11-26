@@ -4,6 +4,7 @@ import tensorflow as tf
 import math
 import collections
 import random
+from debug_printer import debug_printer as dbg
 
 random.seed()
 
@@ -134,6 +135,7 @@ class DeterministicPolicyGradientAlgorithm:
         self.replay_buffer.append(transition)
 
     def step(self, transition: tuple):
+        dbg()
         self.push_buffer(transition)
         sample_size = math.ceil(
             self.sample_proportion * len(self.replay_buffer))
@@ -142,6 +144,7 @@ class DeterministicPolicyGradientAlgorithm:
                       range(len(self.replay_buffer)),
                       sample_size)]
 
+        dbg()
         states = []
         actions = []
         rewards = []
@@ -152,9 +155,13 @@ class DeterministicPolicyGradientAlgorithm:
             rewards.append(t[2])
             next_states.append(t[3])
         transitions = (states, actions, rewards, next_states)
+        dbg()
         self.optimize(transitions, len(sample))
+        dbg()
         self.update_target()
+        dbg()
         self.save()
+        dbg()
 
     def save(self):
         self.critic.save(self.sess)
