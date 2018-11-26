@@ -23,14 +23,12 @@ class Critic(Model):
 
     def __init__(
             self,
-            future_reward_discount: float,
             model_name: str,
             save_path: str):
-        self._future_reward_discount = future_reward_discount
         self._model_name = model_name
         self._save_path = save_path
         self._parameters = dict()
-        with tf.variable_scope("Critic_%s" % model_name):
+        with tf.variable_scope("%s_Critic" % model_name):
             self._parameters = {
                     "conv1_w": tf.get_variable(
                         "conv1_w",
@@ -91,13 +89,15 @@ class Critic(Model):
                 }
 
     def inference(self, X, is_target=False):
-        image_array = tf.convert_to_tensor(X[0])  # (?,320,160,3)
-        image_array = tf.reshape(image_array, [-1, 320, 160, 3])
-        speed = tf.convert_to_tensor([X[1]])  # [0,1]
-        action = tf.convert_to_tensor([X[2]])
+
+        states = X[0]
+        actions = X[1]# (?) [0,1]
+
+        states_image = states[0]# (?,320,160,3)
+        states_speed = states[1]# (?) [0,1]
 
         conv1 = tf.nn.conv2d(
-            image_array,
+            states_image,
             self._parameters["conv1_w"],
             [1, 1, 1, 1],
             "SAME",
@@ -150,7 +150,7 @@ class Critic(Model):
             name="pool4")  # (?,19,9,128)
 
         reshape1 = tf.concat(
-            [tf.reshape(pool4, [-1]), speed, action], 0)
+            [tf.reshape(pool4, [-1]), states_speed, actions], 0)
 
         relu5 = tf.nn.leaky_relu(
             tf.add(
@@ -185,9 +185,8 @@ class Critic(Model):
     def parameters(self):
         return list(self._parameters.values())
 
-    def initialize_parameters(self):
-        with tf.Session() as sess:
-            sess.run(tf.initialize_variables(self.parameters()))
+    def initialize_parameters(self, sess:tf.Session):
+        sess.run(tf.initialize_variables(self.parameters()))
 
     def save(self, sess: tf.Session):
         saver = tf.train.Saver(
@@ -203,20 +202,19 @@ class Critic(Model):
             filename=self._model_name)
         saver.restore(sess, self._save_path)
 
-    def sync(self, target:Critic):
+    def sync(self, target:Critic, sess:tf.Session):
         """Sync the parameter value of self to target.
         
         Arguments:
             target {Critic} -- Target of syncing.
         """
 
-        with tf.Session() as sess:
-            for n in self.parameter_names:
-                sess.run(
-                    target._parameters[n].assign(self._parameters[n]))
+        for n in self.parameter_names:
+            sess.run(
+                target._parameters[n].assign(self._parameters[n]))
 
 
-    def copy(self, model_name: str, save_path: str):
+    def copy(self, model_name: str, save_path: str, sess:tf.Session):
         """Create a new Critic and sync parameter value to it.
         
         Arguments:
@@ -228,10 +226,9 @@ class Critic(Model):
         """
 
         new_network = Critic(
-            self._future_reward_discount,
             model_name, 
             save_path)
 
-        self.sync(new_network)
+        self.sync(new_network,sess)
 
         return new_network
