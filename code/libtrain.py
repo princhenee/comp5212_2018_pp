@@ -4,6 +4,7 @@ import tensorflow as tf
 import math
 import collections
 import random
+from debug import debug_timer
 
 
 class DeterministicPolicyGradientAlgorithm:
@@ -15,14 +16,17 @@ class DeterministicPolicyGradientAlgorithm:
             sample_proportion: float,
             name: str,
             save_path: str,
-            action_exploration_distribution=tf.distributions.Normal(
-                0.0, 0.5),
             sess: tf.Session = tf.Session()):
+
+        self.optimizer1 = tf.train.GradientDescentOptimizer(0.001)
+        self.optimizer2 = tf.train.GradientDescentOptimizer(0.001)
+
+        sess.run(tf.initializers.global_variables())
+        sess.run(tf.initializers.local_variables())
 
         self.future_reward_discount = future_reward_discount
         self.update_weight = update_weight
         self.sess = sess
-        self.action_exploration_distribution = action_exploration_distribution
         self.replay_buffer = collections.deque(maxlen=replay_buffer_size)
         self.sample_proportion = sample_proportion
 
@@ -35,7 +39,6 @@ class DeterministicPolicyGradientAlgorithm:
         self.actor.initialize_parameters(sess)
         self.target_actor = self.actor.copy(
             "%s_target" % name, save_path, sess)
-        self.save()
 
     def critic_train_y(self, transitions: list, batch_size: int):
 
@@ -81,6 +84,7 @@ class DeterministicPolicyGradientAlgorithm:
 
         return loss
 
+    @debug_timer
     def update_target(self):
 
         for n in Critic.parameter_names:
@@ -105,33 +109,29 @@ class DeterministicPolicyGradientAlgorithm:
 
             self.sess.run(self.target_actor._parameters[n].assign(target))
 
+    @debug_timer
     def optimize(
             self,
             transitions: list,
             batch_size: int,
-            optimizer=tf.train.GradientDescentOptimizer(0.00001)):
-
-        self.sess.run(optimizer.minimize(
+            optimizer1=None,
+            optimizer2=None):
+        if optimizer1 is None:
+            optimizer1 = self.optimizer1
+        if optimizer2 is None:
+            optimizer2 = self.optimizer2
+        self.sess.run(optimizer1.minimize(
             self.critic_loss(transitions, batch_size),
             var_list=self.critic.parameters()))
 
-        self.sess.run(optimizer.minimize(
+        self.sess.run(optimizer2.minimize(
             self.actor_loss(transitions, batch_size),
             var_list=self.actor.parameters()))
-
-    def exploration_action(self, states):
-        action_exploration = self.actor.inference(
-            [states])
-        action_exploration = action_exploration * 2 - 1
-        action_exploration += self.action_exploration_distribution.sample()
-        value = self.sess.run(action_exploration)[0][0]
-        value = max(-1, value)
-        value = min(1, value)
-        return value
 
     def push_buffer(self, transition: tuple):
         self.replay_buffer.append(transition)
 
+    @debug_timer
     def step(self):
         sample_size = math.ceil(
             self.sample_proportion * len(self.replay_buffer))

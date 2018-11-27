@@ -64,15 +64,19 @@ last_image = None
 last_speed = 0.0
 last_action = 0.0
 
+iter_count = 100
+EVAL = False
+
 
 @sio.on('telemetry')
 def telemetry(sid, data):
     global reset_sent
     global start_time
     global RESET_SPEED, max_speed
-    global RANDOM_ACTION_PROB
     global last_timestamp, last_speed
     global last_image, last_speed, last_action
+    global iter_count
+    global EVAL
 
     now_timestamp = time.time()
     time_diff = now_timestamp - last_timestamp
@@ -102,18 +106,33 @@ def telemetry(sid, data):
         print('{"last_speed":%f,"last_action":%f,"last_reward":%f,"total_reward":%f,"this_speed":%f}' % (
             last_speed, last_action, last_reward, total_reward, speed))
 
-        if speed < RESET_SPEED*max_speed:
+        if speed < RESET_SPEED and total_reward > 5:
             if not reset_sent:
                 send_reset()
+                print('{"reset":true}')
                 reset_sent = True
-        else:
-            reset_sent = False
 
         # Control angle [-1,1]
-        steering_angle = algo.exploration_action([
-            tf.reshape(image_array, [-1, 320, 160, 3]),
-            tf.convert_to_tensor([[speed]])])
-        steering_angle = steering_angle*2 - 1
+        if not EVAL:
+            print('{"evaluation":false}')
+            steering_angle = algo.target_actor.inference([[
+                tf.reshape(image_array, [-1, 320, 160, 3]),
+                tf.convert_to_tensor([[speed]])]])
+            value = algo.sess.run(steering_angle)[0][0]
+            # steering_angle = random.random()*2
+            # print(steering_angle)
+            # steering_angle -= 1
+
+            steering_angle = value * 2 - 1 + (random.random()*2 - 1)
+            steering_angle = max(steering_angle, -1)
+            steering_angle = min(steering_angle, 1)
+        else:
+            print('{"evaluation":true}')
+            steering_angle = algo.target_actor.inference([[
+                tf.reshape(image_array, [-1, 320, 160, 3]),
+                tf.convert_to_tensor([[speed]])]])
+            value = algo.sess.run(steering_angle)[0][0]
+            steering_angle = value * 2 - 1
 
         # Control throttle [0,1]
         throttle = float(1)
@@ -123,14 +142,16 @@ def telemetry(sid, data):
         send_control(steering_angle, throttle)
 
         if last_image is not None:
-            algo.push_buffer(
-                (
-                    last_image,
-                    [last_speed],
-                    [last_action / 2+0.5],
-                    [last_reward],
-                    image_array,
-                    [speed]))
+            if not reset_sent:
+                algo.push_buffer(
+                    (
+                        last_image,
+                        [last_speed],
+                        [last_action / 2+0.5],
+                        [last_reward],
+                        image_array,
+                        [speed]))
+                print("Pushed buffer")
 
         last_speed = speed
         last_action = steering_angle
@@ -156,7 +177,7 @@ def connect(sid, environ):
 
 @sio.on('reset')
 def reset(sid, environ):
-    global start_time, last_timestamp, last_image, last_speed, last_action
+    global start_time, last_timestamp, last_image, last_speed, last_action, iter_count, reset_sent
     algo.push_buffer(
         (
             last_image,
@@ -165,12 +186,14 @@ def reset(sid, environ):
             [0.0],
             tf.zeros([320, 160, 3]),
             [0.0]))
+    print("Pushed buffer")
     algo.step()
     start_time = time.time()
     last_timestamp = start_time
     last_image = None
     last_speed = 0.0
     last_action = 0.0
+    reset_sent = False
     print("Reset")
 
 
@@ -209,6 +232,7 @@ if __name__ == '__main__':
     if args.model != '':
         model_checkpoint_path = args.model
         algo = DPG(0.5, 0.9, 1024, 0.5, "car_agent", model_checkpoint_path)
+        # algo.load()
 
     if args.record_path != '':
         print("Creating image folder at {}".format(args.record_path))
