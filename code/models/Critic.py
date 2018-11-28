@@ -32,7 +32,7 @@ class Critic(Model):
             self._parameters = {
                     "conv1_w": tf.get_variable(
                         "conv1_w",
-                        shape=[3, 3, 3, 32]),
+                        shape=[3, 3, 4, 32]),
                     "conv2_w": tf.get_variable(
                         "conv2_w",
                         shape=[2, 2, 32, 32]),
@@ -79,7 +79,7 @@ class Critic(Model):
         states = X[0]
         actions = X[1]# (?) [0,1]
 
-        image = states[0]# (?,320,160,3)
+        image = states[0]# (?,320,160,4)
         speed = states[1]# (?) [0,1]
 
         conv1 = tf.nn.conv2d(

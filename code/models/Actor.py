@@ -33,7 +33,7 @@ class Actor(Model):
                     "conv1_w": tf.get_variable(
                         "conv1_w",
                         initializer=tf.initializers.glorot_normal(),
-                        shape=[3, 3, 3, 32]),
+                        shape=[3, 3, 4, 32]),
                     "conv2_w": tf.get_variable(
                         "conv2_w",
                         initializer=tf.initializers.glorot_normal(),
@@ -92,7 +92,7 @@ class Actor(Model):
 
         states = X[0]
 
-        states_image = states[0]# (?,320,160,3)
+        states_image = states[0]# (?,320,160,4)
         states_speed = states[1]# (?) [0,1]
 
         conv1 = tf.nn.conv2d(

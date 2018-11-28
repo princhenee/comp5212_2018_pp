@@ -195,15 +195,15 @@ class SupervisedAlgorithm:
 
         self.sess = sess
 
-        self.actor = Actor(name, save_path)
-        self.actor.initialize_parameters(sess)
+        self.target_actor = Actor(name, save_path)
+        self.target_actor.initialize_parameters(sess)
 
     def actor_loss(self, transitions: list, batch_size: int):
 
         states = transitions[0]
         actions = transitions[1]
 
-        _, actor_logits = self.actor.inference([states])
+        _, actor_logits = self.target_actor.inference([states])
 
         y = actions
 
@@ -222,7 +222,7 @@ class SupervisedAlgorithm:
 
         self.sess.run(optimizer.minimize(
             self.actor_loss(transitions, batch_size),
-            var_list=self.actor.parameters()))
+            var_list=self.target_actor.parameters()))
 
     @debug_timer
     def step(self, transitions: list):
@@ -252,11 +252,10 @@ class SupervisedAlgorithm:
             rewards,
             (next_image, next_speed))
         self.optimize(transitions, len(transitions))
-        self.update_target()
         self.save()
 
     def save(self):
-        self.actor.save(self.sess)
+        self.target_actor.save(self.sess)
 
     def load(self):
-        self.actor.load(self.sess)
+        self.target_actor.load(self.sess)
