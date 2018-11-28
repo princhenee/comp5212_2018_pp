@@ -45,7 +45,7 @@ class DeterministicPolicyGradientAlgorithm:
         rewards = transitions[2]
         next_states = transitions[3]
 
-        next_target_action = self.target_actor.inference([next_states])
+        next_target_action, _ = self.target_actor.inference([next_states])
         next_target_critic = self.target_critic.inference(
             [next_states, next_target_action])
 
@@ -76,7 +76,7 @@ class DeterministicPolicyGradientAlgorithm:
 
         states = transitions[0]
 
-        actor_value = self.actor.inference([states])
+        actor_value, _ = self.actor.inference([states])
 
         critic_value = self.critic.inference([states, actor_value])
 
@@ -179,3 +179,84 @@ class DeterministicPolicyGradientAlgorithm:
         self.target_critic.load(self.sess)
         self.actor.load(self.sess)
         self.target_actor.load(self.sess)
+
+
+class SupervisedAlgorithm:
+    def __init__(
+            self,
+            name: str,
+            save_path: str,
+            sess: tf.Session = tf.Session()):
+
+        self.optimizer = tf.train.AdamOptimizer()
+
+        sess.run(tf.initializers.global_variables())
+        sess.run(tf.initializers.local_variables())
+
+        self.sess = sess
+
+        self.actor = Actor(name, save_path)
+        self.actor.initialize_parameters(sess)
+
+    def actor_loss(self, transitions: list, batch_size: int):
+
+        states = transitions[0]
+        actions = transitions[1]
+
+        _, actor_logits = self.actor.inference([states])
+
+        y = actions
+
+        loss = tf.losses.sigmoid_cross_entropy(y, actor_logits)
+
+        return loss
+
+    @debug_timer
+    def optimize(
+            self,
+            transitions: list,
+            batch_size: int,
+            optimizer=None):
+        if optimizer is None:
+            optimizer = self.optimizer
+
+        self.sess.run(optimizer.minimize(
+            self.actor_loss(transitions, batch_size),
+            var_list=self.actor.parameters()))
+
+    @debug_timer
+    def step(self, transitions: list):
+
+        image = []
+        speed = []
+        actions = []
+        rewards = []
+        next_image = []
+        next_speed = []
+        for t in transitions:
+            image.append(t[0])
+            speed.append(t[1])
+            actions.append(t[2])
+            rewards.append(t[3])
+            next_image.append(t[4])
+            next_speed.append(t[5])
+
+        image = tf.stack(image)
+        speed = tf.convert_to_tensor(speed)
+        actions = tf.convert_to_tensor(actions)
+        next_image = tf.stack(next_image)
+        next_speed = tf.convert_to_tensor(next_speed)
+        transitions = (
+            (image, speed),
+            actions,
+            rewards,
+            (next_image, next_speed))
+        self.optimize(transitions, len(transitions))
+        self.update_target()
+        self.save()
+
+    def save(self):
+        self.actor.save(self.sess)
+
+    def load(self):
+        self.actor.load(self.sess)

@@ -182,7 +182,7 @@ class Actor(Model):
 
         mu = tf.nn.sigmoid(logit, name="mu")
 
-        return mu  # (1) [-128,127]
+        return mu, logit  # (1) [-128,127]
 
     def parameters(self):
         return list(self._parameters.values())

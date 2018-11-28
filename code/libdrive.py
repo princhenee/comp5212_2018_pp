@@ -115,7 +115,7 @@ def telemetry(sid, data):
         # Control angle [-1,1]
         if not EVAL:
             print('{"evaluation":false}')
-            steering_angle = algo.target_actor.inference([[
+            steering_angle, _ = algo.target_actor.inference([[
                 tf.reshape(image_array, [-1, 320, 160, 3]),
                 tf.convert_to_tensor([[speed]])]])
             value = algo.sess.run(steering_angle)[0][0]
@@ -128,7 +128,7 @@ def telemetry(sid, data):
             steering_angle = min(steering_angle, 1)
         else:
             print('{"evaluation":true}')
-            steering_angle = algo.target_actor.inference([[
+            steering_angle, _ = algo.target_actor.inference([[
                 tf.reshape(image_array, [-1, 320, 160, 3]),
                 tf.convert_to_tensor([[speed]])]])
             value = algo.sess.run(steering_angle)[0][0]
