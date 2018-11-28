@@ -214,18 +214,40 @@ def send_reset():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Remote Driving')
     parser.add_argument(
-        'model',
+        '-m', '--model_path',
         type=str,
-        nargs='?',
         default='',
         help='Path to model checkpoint path.'
     )
     parser.add_argument(
-        'record_path',
+        '-M', '--model',
         type=str,
-        nargs='?',
+        default='',
+        help='The model used. ["supervised","continuous_deep_q","discrete_deep_q"]'
+    )
+    parser.add_argument(
+        '-d', '--drive',
+        type=str,
+        default='manual',
+        help='The driver used. Default: "manual". ["manual","model_greedy","model_epsilon_greedy","random"]'
+    )
+    parser.add_argument(
+        '-e', '--epsilon',
+        type=float,
+        default=0.5,
+        help='Epsilon as in epsilon-greedy exploration. Default: 0.5.'
+    )
+    parser.add_argument(
+        '-r', '--record_path',
+        type=str,
         default='',
         help='Path to recording folder. This is where the images from the run will be saved.'
+    )
+    parser.add_argument(
+        '-t', '--train',
+        default=False,
+        action="store_true",
+        help='Train the model with experience replay.'
     )
     args = parser.parse_args()
 
