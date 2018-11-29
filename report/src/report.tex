@@ -2,7 +2,8 @@
 
 \usepackage[english]{babel}
 \usepackage[utf8]{inputenc}
-\usepackage{amsmath}
+\usepackage{amsmath,amssymb}
+\usepackage{multirow}
 \usepackage{graphicx}
 
 \title{COMP5212 Machine Learning 2018 Fall programming project \\
@@ -69,7 +70,7 @@ problem in self-driving can be: given a set of environment input, find the best 
 execute until arriving at destination.
 
 
-\section{Udacity Self-driving car simulator }
+\section{Udacity Self-driving car simulator}
 
 In this project, we develop our algorithms on an open source self-driving car simulator provided
 by Udacity \cite{simulator}. The simulator provides a near real-world environment of a racing 
@@ -78,6 +79,8 @@ frames. The by default sample frequency is 30 frames per second. There are two m
 simulator, one is ``Training mode'' for human controlled training records and the other is ``
 Autonomous mode'' for training by a machine agent. In Training mode, human player can drive the
 car under simulated environment, and there is a record button to capture video and store the images.
+We use ``Training mode'' to realize supervised learning and ``Autonomous mode'' to implement 
+reinforcement learning.
 In Autonomous mode, the control of a car can be delivered by a python program with a web socket.
 The official document of Udacity provides a behavioral cloning repository \cite{behavior} to interact
 with the simulation environment. 
@@ -89,7 +92,7 @@ highest speed in simulation is 30 miles per hour).
 
 A sample image during training is shown in Figure \ref{fig:sample_rgb}, which is similar to a front 
 view during human driving. The images are in RGB mode by default and the resolution can be set according
-to a user's preference. In our scenario, we choose the $320 x 160$ as the resolution value to ease
+to a user's preference. In our scenario, we choose the $320 \times 160$ as the resolution value to ease
 the training burden. To further reduce training overhead, we 
 also convert the RGB images to gray-scale ones. After observing the sample images, we find that
 the gray-scale image data for the Red channel has better information for acting later on. 
@@ -120,20 +123,49 @@ reward can be no traffic accident and arrive at the destination safely.
 \end{figure}
 
 
-
 Figure \ref{fig:RL} shows the basic model of reinforcement learning \cite{rlIntroduction}. At
-each time $t$, an agent receives the environment state $S_t$ and current reward $R_t$. It then
-chooses an action $a_t$ from the set of available actions, which is sent to the environment. The
-environment moves to a new state $S_{t+1}$ and new reward $R_{t+1}$ and feedback to the agent.
-The goal of a reinforcement learning agent is to gain as much as reward as possible.
+each time $t$, an agent receives the environment state $S_t \in \mathcal{S}$ and current scalar
+reward $R_t$. It then chooses an action $a_t \in \mathbb{R}^N$ from the set of available
+actions, which is sent to the environment. 
 
-\subsection{Q learning}
-Q-learning defines a reward
-expectation function, $Q$, which provides the expected reward of an action $a$ taken under the
-current state $s$. State is the image displayed and actions are all available actions of the
-drive. This $Q$ function can be recursively defined as $Q(s,a) = R(s,a) + \alpha \max_{a^{'}}
-Q(S^{'}(s,a),a^{'})$, where $R$ is the immediate reward given action $a$ taken under state $s$,
-$\alpha$ is the discount rate of future reward and $S^{'}$ is the state transition.
+The
+environment moves to a new state $S_{t+1}$ and new reward $R_{t+1}$ and feedback to the agent.
+The goal of a reinforcement learning agent is to gain as much as reward as possible. A policy
+$\pi$ is defined to map states to a probability distribution over the actions $\pi : \mathcal{S}
+\ \rightarrow\ \mathcal{P}(\mathcal{A})$. The environment is stochastic and we can model it as
+a Markov transition dynamics $p(s_{t+1} | s_t, a_t)$, and reward function $r(s_t, a_t)$.
+The return of a state is defined as the sum of discounted future reward $R_t = \sum\limits_{i=t}
+^{T}{\gamma^{(i-t)} r(s_i, a_i)}$, where $\gamma \in\ [0,1]$ is a discounting constant. 
+
+Many reinforcement learning apply the action-value function to decide the most valuable action
+given a state. It describes the expected return after taking an action $a_t$ given $s_t$ by
+following policy $\pi$:
+\[
+    Q^{\pi}(s_t, a_t) = \mathbb{E}_{r_i \geq t, s_{i geq t} \sim E, a_{i > t} \sim \pi}
+    {\big[ R_t | s_t, a_t \big]}
+\]
+Moreover, many algorithms in reinforcement learning take the Bellman equation form of the
+action-value function, which is
+\[
+    Q^{\pi}(s_t, a_t) = \mathbb{E}_{r_t, s_{t+1} \sim E}
+    {\big[ r(s_t, a_t) + \gamma \mathbb{E}_{a_{t+1} \sim \pi}{[Q^{\pi}(s_{t+1}, a_{t+1})]} \big]}
+\]
+
+
+\subsubsection{Q learning}
+Q-learning \cite{qlearning} is a commonly used off-policy algorithm in reinforcement learning,
+which uses the greedy policy $\mu(s) = \text{arg} \max_a{Q(s,a)}$. It defines a reward
+expectation function, $Q$, which provides the expected reward of an action $a_t$ taken under the
+current state $s_t$. Assume function approximators aare parameterized by $\theta^Q$, the Q learning
+tend to optimize by minimizing the loss:
+\[
+    L(\theta^Q) = \mathbb{E}_{s_t, a_t, r_t \sim E}{\Bigg[ \big( Q(s_t, a_t | \theta^Q)
+                                        - y_t\big)^2 \Bigg]} 
+\]
+,where
+\[
+    y_t = r(s_t, a_t) + \gamma Q(s_{t+1}, \mu(s_{t+1}) | \theta^Q)
+\]
 
 \begin{figure}
 	\centering
@@ -142,25 +174,93 @@ $\alpha$ is the discount rate of future reward and $S^{'}$ is the state transiti
 	\label{fig:deepq}
 \end{figure}
 
-\subsection{Deep Q learning}
- Deep Q learning is take a neural network to estimate the Q value for each action-reward pair. Given
-numerous possibilities of imagery state $s$, we cannot compute $Q$ directly. Alternatively, we
-can use a deep convolutional network to estimate $Q$.
+\subsubsection{Deep Q learning}
+The massive use of non-linear function approximators for learning value or action-value functions has
+been depreciated in the past since the convergence is no longer guaranteed, and thus the practical
+learning tend to be unstable. To search for practical solution, Mnih et al. \cite{dql} apply large
+neural networks as function approximators, which is known as Deep Q learning. The motivation
+behind is that, in our case with the large state space $\mathcal{S}$ of front images during driving,
+it is impossible to directly compute $Q$. Alternatively,
+we can use a deep convolutional network to estimate $Q$.
 
-Figure \ref{fig:deepq} illustrates a model of deep Q-learning network \cite{dqn}. First, we have
-several layers of convolution and max-pooling to reduce the imagery input into smaller vector.
-Then we have several fully-connected layer for the final decision making. The sample network
+Figure \ref{fig:deepq} illustrates a model of deep Q learning network \cite{dqn}. First, 
+several layers of convolution and max-pooling help reduce the imagery input into smaller feature
+vector.
+Then we have several fully-connected layer for the final decision making on the control of a car.
+The sample network
 shown estimates a function $Q : S \rightarrow A^n$, which takes a image input and output the
 expected reward for all possible actions.
 
-\subsection{Continuous control for deep reinforcement learning}
-TODO
+One challenge when applying neural networks for reinforcement learning is that most optimization
+algorithms assume that the training samples are independently and identically distributed. However,
+this is no longer the case when exploring sequentially in a stochastic environment. Usually, the
+sequential actions result in states with strong correlation, which will easily lead to over-fitting.
+As in Deep Q learning, a replay buffer is used to address this issue. The replay buffer is a finite
+size cache containing randomly sampled historical tuples $(s_t, a_t, r_t, s_{t+1})$. When the replay
+buffer becomes full, the oldest samples will be discarded. At each epoch, the latest states and some
+from the replay buffer are mixed to form a minibatch, allowing the algorithm to learn across a set of
+uncorrelated transitions.
+
+\subsubsection{Continuous control for deep reinforcement learning}
+
 In this project, we use the method of deep reinforcement learning for continuous control \cite{continous}.
 The reason to apply this model is that our action space is the steering angle, which is a continuous 
-value from $-25$ to $25$.
+real value from $-25$ to $25$. One major challenge with continuous action space (e.g. steering angle)
+is exploration. Researchers in \cite{continous} claim to add an exploration policy $\mu^{\prime}$ to
+solve this problem by adding noised sampled from a noise process $\mathcal{N}$ to the policy:
+\[
+    \mu^{\prime}(s_t) = \mu(s_t | \theta_t^{\mu}) + \mathcal{N}
+\]
+Now, in addition to a neural network estimating $Q(s, a| \theta^Q)$, we add another neural network to
+estimate our policy $\mu^{\prime}(s_t | \theta^{\mu})$.
 
 \section{Problem formulation}
-TODO
+
+Now we show our problem formulation for both supervised learning and reinforcement learning
+with neural networks.
+\subsubsection{Supervised learning}
+In supervised learning, we first record a set of images and actions taken by human players on the
+simulator. We start the simulator in ``Training mode'' and record all images frames into a local
+data folder, along with the statistics of steering angle, speed, throttle. We collect a total
+of XXX image frames. We separate the whole data set of images by a training-test ratio of 4:1.
+To reduce overhead, we discretisize the action space of steering angle into limited intervals, and
+use these intervals to label each image frame. Now, a sample of data $(X, y)$ is defined as: $X$
+is a image frame, $y$ is the action (interval id from $0$ to $N$) taken by human player. This becomes
+a multi-class image classification problem similar to PA2.
+
+The neural network architecture we use is described in the following:
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+% Component & Layer & #Filters & D & \multicolumn{7}{|c|}{F}  \\ \hline
+Component & Layer & \#Filters & Kernel size & Strides & Input Shape & Output Shape  \\ \hline
+\multirow{4}{*}{Encoder} & ConvLayer & 32 & $3 \times 3$ & 1 & $320 \times 80 \times 1$ & $320 \times 80 \times 1$ \\
+ & MaxPooling & -  & $2 \times 2$ & 2 & $320 \times 80 \times 1$ & $320 \times 80 \times 1$ \\
+ & ConvLayer & 32 & $3 \times 3$ & 2 & $320 \times 80 \times 1$ & $320 \times 80 \times 1$ \\
+ & ConvLayer & 32 & $3 \times 3$ & 1 & $320 \times 80 \times 1$ & $320 \times 80 \times 1$ \\
+ & MaxPooling & -  & $2 \times 2$ & 2 & $320 \times 80 \times 1$ & $320 \times 80 \times 1$ \\ \hline
+\end{tabular}
+\caption{Encoder for Supervised Learning}
+\label{table:nn_supervised_encoder}
+\end{table}
+
+\begin{table}[htbp]
+\centering
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+Component & Layer & \#Units & Input Shape & Output Shape  \\ \hline
+Encoder & \multicolumn{4}{|c|}{shown in table \ref{table:nn_supervised_encoder}} \\ \hline
+\multirow{3}{*}{Predictor} & FC & 1024 & $320 \times 80 \times 1$ & $320 \times 80 \times 1$ \\
+ & FC & 512  & $320 \times 80 \times 1$ & $320 \times 80 \times 1$ \\
+ & FC & 25   &  $320 \times 80 \times 1$ & $320 \times 80 \times 1$ \\ \hline
+\end{tabular}
+\caption{Encoder and Predictor for Supervised Learning}
+\label{table:nn_supervised_whole}
+\end{table}
+
+\subsubsection{Reinforcement learning}
 Environment setting
 Action space
 Reward function
@@ -224,7 +324,10 @@ game over.
 \bibitem{rlIntroduction}
     Sutton, Richard S., Andrew G. Barto, and Francis Bach. \texttt{Reinforcement learning: An
     introduction.} MIT press, 1998.
-
+    
+\bibitem{qlearning}
+  Christopher Watkins,  Peter Dayan. \texttt{Q-learning.} Machine learning, 1992.
+  
 \bibitem{dqn}
   Volodymyr Mnih, Koray Kavukcuoglu, et al. \texttt{Human-level control through deep
   reinforcement learning.} Nature, 2015.
