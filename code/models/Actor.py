@@ -45,43 +45,43 @@ class Actor(Model):
                     "conv4_w": tf.get_variable(
                         "conv4_w",
                         initializer=tf.initializers.glorot_normal(),
-                        shape=[2, 2, 64, 128]),
+                        shape=[2, 2, 64, 64]),
                     "relu5_w": tf.get_variable(
                         "relu5_w",
                         initializer=tf.initializers.glorot_normal(),
-                        shape=[20*10*128 + 1, 1024]),
+                        shape=[20*10*64 + 1, 512]),
                     "relu5_b": tf.get_variable(
                         "relu5_b",
                         initializer=tf.initializers.glorot_normal(),
-                        shape=[1024]),
+                        shape=[512]),
                     "relu6_w": tf.get_variable(
                         "relu6_w",
                         initializer=tf.initializers.glorot_normal(),
-                        shape=[1024, 512]),
+                        shape=[512, 256]),
                     "relu6_b": tf.get_variable(
                         "relu6_b",
                         initializer=tf.initializers.glorot_normal(),
-                        shape=[512]),
+                        shape=[256]),
                     "relu7_w": tf.get_variable(
                         "relu7_w",
                         initializer=tf.initializers.glorot_normal(),
-                        shape=[512, 256]),
+                        shape=[256, 128]),
                     "relu7_b": tf.get_variable(
                         "relu7_b",
                         initializer=tf.initializers.glorot_normal(),
-                        shape=[256]),
+                        shape=[128]),
                     "relu8_w": tf.get_variable(
                         "relu8_w",
                         initializer=tf.initializers.glorot_normal(),
-                        shape=[256, 256]),
+                        shape=[128, 128]),
                     "relu8_b": tf.get_variable(
                         "relu8_b",
                         initializer=tf.initializers.glorot_normal(),
-                        shape=[256]),
+                        shape=[128]),
                     "logit_w": tf.get_variable(
                         "logit_w",
                         initializer=tf.initializers.glorot_normal(),
-                        shape=[256, 1]),
+                        shape=[128, 1]),
                     "logit_b": tf.get_variable(
                         "logit_b",
                         initializer=tf.initializers.glorot_normal(),
@@ -149,7 +149,7 @@ class Actor(Model):
             name="pool4")  # (?,19,9,128)
 
         reshape1 = tf.concat(
-            [tf.reshape(pool4, [ -1,20*10*128]), states_speed],
+            [tf.reshape(pool4, [ -1,20*10*64]), states_speed],
             1)
 
         relu5 = tf.nn.leaky_relu(
@@ -188,7 +188,7 @@ class Actor(Model):
         return list(self._parameters.values())
 
     def initialize_parameters(self, sess:tf.Session):
-        sess.run(tf.initialize_variables(self.parameters()))
+        sess.run(tf.initializers.variables(self.parameters()))
 
     def save(self, sess: tf.Session):
         saver = tf.train.Saver(
