@@ -2,6 +2,7 @@ import tensorflow as tf
 
 
 class Model:
+
     def __init__(self):
         raise NotImplementedError
 
@@ -20,11 +21,8 @@ class Model:
     def load(self, sess: tf.Session()):
         raise NotImplementedError
 
-    def train_operation(self):
+    def sync(self, target):
         raise NotImplementedError
 
-    def train(self, X, Y):
-        raise NotImplementedError
-
-    def loss_function(self):
+    def copy(self, model_name: str, save_path: str):
         raise NotImplementedError
