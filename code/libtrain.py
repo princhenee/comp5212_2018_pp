@@ -184,19 +184,23 @@ class DeterministicPolicyGradientAlgorithm:
 class SupervisedAlgorithm:
     def __init__(
             self,
+            replay_buffer_size: int,
+            mini_batch_size: int,
             name: str,
             save_path: str,
             sess: tf.Session = tf.Session()):
 
-        self.optimizer = tf.train.AdamOptimizer()
-
-        sess.run(tf.initializers.global_variables())
-        sess.run(tf.initializers.local_variables())
-
+        self.optimizer = tf.train.GradientDescentOptimizer(0.01)
+        self.replay_buffer = collections.deque(maxlen=replay_buffer_size)
+        self.target_actor = Actor(name, save_path)
+        self.mini_batch_size = mini_batch_size
         self.sess = sess
 
-        self.target_actor = Actor(name, save_path)
-        self.target_actor.initialize_parameters(sess)
+        self.sess.run(tf.initializers.global_variables())
+        self.sess.run(tf.initializers.local_variables())
+        self.sess.run(tf.initializers.variables(
+            self.target_actor.parameters()))
+        self.sess.run(tf.initializers.variables(self.optimizer.variables()))
 
     def actor_loss(self, transitions: list, batch_size: int):
 
@@ -224,34 +228,42 @@ class SupervisedAlgorithm:
             self.actor_loss(transitions, batch_size),
             var_list=self.target_actor.parameters()))
 
+    def push_buffer(self, transition: tuple):
+        self.replay_buffer.append(transition)
+
     @debug_timer
-    def step(self, transitions: list):
+    def step(self):
+        for _ in range(math.floor(len(self.replay_buffer)/self.mini_batch_size) * 5):
+            sample_size = self.mini_batch_size
+            sample = [self.replay_buffer[i]
+                      for i in random.sample(range(len(self.replay_buffer)),
+                                             sample_size)]
 
-        image = []
-        speed = []
-        actions = []
-        rewards = []
-        next_image = []
-        next_speed = []
-        for t in transitions:
-            image.append(t[0])
-            speed.append(t[1])
-            actions.append(t[2])
-            rewards.append(t[3])
-            next_image.append(t[4])
-            next_speed.append(t[5])
+            image = []
+            speed = []
+            actions = []
+            rewards = []
+            next_image = []
+            next_speed = []
+            for t in sample:
+                image.append(t[0])
+                speed.append(t[1])
+                actions.append(t[2])
+                rewards.append(t[3])
+                next_image.append(t[4])
+                next_speed.append(t[5])
 
-        image = tf.stack(image)
-        speed = tf.convert_to_tensor(speed)
-        actions = tf.convert_to_tensor(actions)
-        next_image = tf.stack(next_image)
-        next_speed = tf.convert_to_tensor(next_speed)
-        transitions = (
-            (image, speed),
-            actions,
-            rewards,
-            (next_image, next_speed))
-        self.optimize(transitions, len(transitions))
+            image = tf.stack(image)
+            speed = tf.convert_to_tensor(speed)
+            actions = tf.convert_to_tensor(actions)
+            next_image = tf.stack(next_image)
+            next_speed = tf.convert_to_tensor(next_speed)
+            transitions = (
+                (image, speed),
+                actions,
+                rewards,
+                (next_image, next_speed))
+            self.optimize(transitions, len(sample))
         self.save()
 
     def save(self):

@@ -72,8 +72,8 @@ TRAINING = False
 
 
 def grayscale_pack_motion_image(images):
-    images = tf.stack(images)
-    images = tf.images.rgb_to_grayscale(images)
+    images = tf.stack(list(images))
+    images = tf.image.rgb_to_grayscale(images)
     images = tf.reshape(images, [4, 320, 160])
     images = tf.transpose(images, [1, 2, 0])
     return images
@@ -119,7 +119,7 @@ def telemetry(sid, data):
     global start_time
     global RESET_SPEED, max_speed
     global last_timestamp, last_speed
-    global last_image, last_speed, last_action
+    global last_images, last_speed, last_action
     global algo, driver, epsilon
     global TRAINING
 
@@ -148,32 +148,31 @@ def telemetry(sid, data):
         total_reward = now_timestamp - start_time
         max_speed = max(speed, max_speed)
 
-        print('{"last_speed":%f,"last_action":%f,"last_reward":%f,"total_reward":%f,"this_speed":%f,"max_speed":%f}' % (
-            last_speed, last_action, last_reward, total_reward, speed, max_speed))
+        if not reset_sent:
+            print('{"last_speed":%f,"last_action":%f,"last_reward":%f,"total_reward":%f,"this_speed":%f,"max_speed":%f,"reset_speed":%f}' % (
+                last_speed, last_action, last_reward, total_reward, speed, max_speed, (RESET_SPEED * max_speed)))
 
-        while len(last_image) != last_image.maxlen:
-            last_image.append(image_array)
-        packed_last_images = grayscale_pack_motion_image(last_image)
-        last_image.append(image_array)
-
-        if speed < (RESET_SPEED * max_speed):
-            if not reset_sent:
+            while len(last_images) != last_images.maxlen:
+                last_images.append(image_array)
+            packed_last_images = grayscale_pack_motion_image(last_images)
+            last_images.append(image_array)
+            if speed < (RESET_SPEED * max_speed) and total_reward > 2:
+                print('{"reset":true}')
                 if TRAINING:
-                    algo.push_buffer(
-                        (
-                            packed_last_images,
-                            [last_speed],
-                            [last_action / 2+0.5],
-                            [0.0],
-                            tf.zeros([320, 160, 4]),
-                            [0.0]))
+                    if args.model != "supervised":
+                        algo.push_buffer(
+                            (
+                                packed_last_images,
+                                [last_speed],
+                                [last_action / 2+0.5],
+                                [0.0],
+                                tf.zeros([320, 160, 4]),
+                                [0.0]))
                     print("Pushed buffer")
                     algo.step()
                 send_reset()
-                print('{"reset":true}')
                 reset_sent = True
-        else:
-            if not reset_sent:
+            else:
                 if TRAINING:
                     algo.push_buffer(
                         (
@@ -181,13 +180,15 @@ def telemetry(sid, data):
                             [last_speed],
                             [last_action / 2+0.5],
                             [last_reward],
-                            grayscale_pack_motion_image(last_image),
+                            grayscale_pack_motion_image(last_images),
                             [speed]))
                     print("Pushed buffer")
 
-        last_speed = speed
+            last_speed = speed
 
-        driver(grayscale_pack_motion_image(last_image), speed)
+            driver(grayscale_pack_motion_image(last_images), speed)
+        else:
+            sio.emit('manual', data={}, skip_sid=True)
 
         # save frame
         if args.record_path != '':
@@ -209,13 +210,14 @@ def connect(sid, environ):
 
 @sio.on('reset')
 def reset(sid, environ):
-    global start_time, last_timestamp, last_image, last_speed, last_action, reset_sent
+    global max_speed, start_time, last_timestamp, last_images, last_speed, last_action, reset_sent
 
     start_time = time.time()
     last_timestamp = start_time
-    last_image = None
+    last_images = collections.deque(maxlen=4)
     last_speed = 0.0
     last_action = 0.0
+    max_speed = 0.0
     reset_sent = False
     print("Reset")
 
@@ -292,7 +294,7 @@ if __name__ == '__main__':
                        model_checkpoint_path)
         elif args.model == 'supervised':
             algo = SupervisedAlgorithm(
-                "car_agent_supervised", model_checkpoint_path)
+                10000, 128, "car_agent_supervised", model_checkpoint_path)
         else:
             print("Model not recognised.")
             exit(1)
