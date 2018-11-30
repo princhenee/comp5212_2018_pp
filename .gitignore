@@ -10,3 +10,4 @@ report/**/*.fdb_latexmk
 report/**/*.fls
 report/**/*.log
 report/**/*.gz
+.DS_Store
