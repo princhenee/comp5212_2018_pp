@@ -12,7 +12,9 @@
 
 ```
 pp.pdf :  project requirements
-code : all project codes
+ml-supervised : model and settings for supervised learning
+ml-deep-q-continuous-action: model and settings for DDPG
+ml-deep-q-discretized-action: model and settings for Deep Q learning with discretized actions
 proposal : proposal to submit, deadline 16/10/2018 (tex)
 report : final report, deadline 30/11/2018 (tex)
 ```
