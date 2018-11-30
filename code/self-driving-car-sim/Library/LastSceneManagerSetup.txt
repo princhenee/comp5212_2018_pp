@@ -1,4 +1,0 @@
-sceneSetups:
-- path: Assets/1_SelfDrivingCar/Scenes/LakeTrackTraining.unity
-  isLoaded: 1
-  isActive: 1

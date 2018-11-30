@@ -1,8 +1,0 @@
-venv/
-.env
-.out
-.env.leave
-.vscode/
-record-img/
-car-simulator-linux/
-__pycache__/
