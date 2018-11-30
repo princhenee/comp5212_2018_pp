@@ -4,7 +4,7 @@
 
 |      name      |    student ID    |    email    |
 |----------------|------------------|-------------|
-|  Hok Chun Ng   |     20272532     | hcngac@connect.ust.hk |
+|  Hok Chun Ng   |     20272532t      | hcngac@connect.ust.hk |
 |Shengyuan Zhang |     20565161     | szhangcg@connect.ust.hk |
 |    Ge Chen     |     20360858     |  gchenaj@connect.ust.hk |
 
