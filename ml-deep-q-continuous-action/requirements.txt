@@ -1,0 +1,6 @@
+numpy
+flask-socketio
+eventlet
+pillow
+flask
+tensorflow
