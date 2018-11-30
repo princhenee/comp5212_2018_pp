@@ -1,8 +1,5 @@
-"""
-Project 3 configuration and hyperparameters
-"""
 
-NVIDIA_H, NVIDIA_W = 66, 200
+NVIDIA_H, NVIDIA_W = 80, 160
 
 CONFIG = {
     'batchsize': 512,
@@ -14,6 +11,6 @@ CONFIG = {
     'augmentation_value_min': 0.2,
     'augmentation_value_max': 1.5,
     'bias': 0.8,
-    'crop_height': range(20, 140)
+    'crop_height': range(60, 140)
 }
 
