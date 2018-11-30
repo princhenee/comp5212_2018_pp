@@ -4,3 +4,9 @@ proposal/**/*.fdb_latexmk
 proposal/**/*.fls
 proposal/**/*.log
 proposal/**/*.gz
+report/**/*.DS_Store
+report/**/*.aux
+report/**/*.fdb_latexmk
+report/**/*.fls
+report/**/*.log
+report/**/*.gz
